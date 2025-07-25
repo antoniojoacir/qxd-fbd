@@ -1,8 +1,25 @@
+from typing import List
 from fastapi import APIRouter, HTTPException
 from models.endereco import Endereco
 from env.db import db_connect
 
 router = APIRouter()
+
+
+@router.get("/list", response_model=List[Endereco])
+async def list_enderecos():
+    connection = db_connect()
+    cursor = connection.cursor()
+    cursor.execute("SELECT id_endereco, cep, cidade, rua, uf, numero FROM enderecos")
+    data = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return [
+        Endereco(
+            id_endereco=i[0], cep=i[1], cidade=i[2], rua=i[3], uf=i[4], numero=i[5]
+        )
+        for i in data
+    ]
 
 
 @router.post("/create")
