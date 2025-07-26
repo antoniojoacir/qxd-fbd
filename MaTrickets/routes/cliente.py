@@ -4,7 +4,6 @@ from models.contato import Contato
 from models.endereco import Endereco
 from models.cliente import Cliente
 from env.db import db_connect
-import psycopg2.extras
 
 router = APIRouter()
 
@@ -12,7 +11,7 @@ router = APIRouter()
 @router.get("/list", response_model=List[Cliente])
 async def list_clientes():
     connection = db_connect()
-    cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor = connection.cursor()
     data = []
     try:
         cursor.execute(
@@ -32,29 +31,29 @@ async def list_clientes():
     finally:
         cursor.close()
         connection.close()
-        return [
-            Cliente(
-                id_cliente=row["id_cliente"],
-                cpf=row["cpf"],
-                pnome=row["pnome"],
-                unome=row["unome"],
-                data_nasc=row["data_nasc"],
-                contato=Contato(
-                    id_contato=row["id_contato"],
-                    tipo_contato=row["tipo_contato"],
-                    info_contato=row["info_contato"],
-                ),
-                endereco=Endereco(
-                    id_endereco=row["id_endereco"],
-                    cep=row["cep"],
-                    cidade=row["cidade"],
-                    rua=row["rua"],
-                    uf=row["uf"],
-                    numero=row["numero"],
-                ),
-            )
-            for row in data
-        ]
+    return [
+        Cliente(
+            id_cliente=i[0],
+            cpf=i[1],
+            pnome=i[2],
+            unome=i[3],
+            data_nasc=i[4],
+            contato=Contato(
+                id_contato=i[5],
+                tipo_contato=i[6],
+                info_contato=i[7],
+            ),
+            endereco=Endereco(
+                id_endereco=i[8],
+                cep=i[9],
+                cidade=i[10],
+                rua=i[11],
+                uf=i[12],
+                numero=i[13],
+            ),
+        )
+        for i in data
+    ]
 
 
 @router.post("/create")
