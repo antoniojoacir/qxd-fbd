@@ -10,13 +10,21 @@ router = APIRouter()
 async def list_clientes():
     connection = db_connect()
     cursor = connection.cursor()
-    cursor.execute("SELECT id_cliente, cpf, pnome, unome, data_nascimento, id_contato, id_endereco FROM enderecos")
+    cursor.execute(
+        "SELECT id_cliente, cpf, pnome, unome, data_nascimento, id_contato, id_endereco FROM enderecos"
+    )
     data = cursor.fetchall()
     cursor.close()
     connection.close()
     return [
         Cliente(
-            id_cliente=i[0], cpf=i[1], pnome=i[2], unome=i[3], data_nascimento=i[4], id_contato=i[5], id_endereco=i[6]
+            id_cliente=i[0],
+            cpf=i[1],
+            pnome=i[2],
+            unome=i[3],
+            data_nasc=i[4],
+            id_contato=i[5],
+            id_endereco=i[6],
         )
         for i in data
     ]
@@ -34,7 +42,7 @@ async def create_cliente(cliente: Cliente):
                 cliente.cpf,
                 cliente.pnome,
                 cliente.unome,
-                cliente.data_nascimento,
+                cliente.data_nasc,
                 cliente.id_contato,
                 cliente.id_endereco,
             ),
