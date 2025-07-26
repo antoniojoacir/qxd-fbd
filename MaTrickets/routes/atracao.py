@@ -15,7 +15,7 @@ async def list_atracoes():
     cursor.close()
     connection.close()
     return [
-        Ticket(
+        Atracao(
             id_atracao=i[0], cnpj=i[1], nome_atracao=i[2], tipo_atracao=i[3], id_contato=i[4]
         )
         for i in data
