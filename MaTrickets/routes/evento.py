@@ -16,7 +16,7 @@ async def list_eventos():
     connection.close()
     return [
         Evento(
-            id_evento=i[0], titulo=i[1], data_inicio=i[2], data_fim=i[3], horario_inicio=i[4], horario_fim=i[5,] id_contato=i[6], id_endereco=i[7]
+            id_evento=i[0], titulo=i[1], data_inicio=i[2], data_fim=i[3], horario_inicio=i[4], horario_fim=i[5], id_contato=i[6], id_endereco=i[7]
         )
         for i in data
     ]
