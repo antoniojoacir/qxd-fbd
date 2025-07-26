@@ -1,7 +1,10 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
+from models.contato import Contato
+from models.endereco import Endereco
 from models.cliente import Cliente
 from env.db import db_connect
+import psycopg2.extras
 
 router = APIRouter()
 
@@ -9,10 +12,19 @@ router = APIRouter()
 @router.get("/list", response_model=List[Cliente])
 async def list_clientes():
     connection = db_connect()
-    cursor = connection.cursor()
+    cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    data = []
     try:
         cursor.execute(
-            "SELECT id_cliente, cpf, pnome, unome, data_nasc, id_contato, id_endereco FROM clientes"
+            """
+            SELECT 
+                c.id_cliente, c.cpf, c.pnome, c.unome, c.data_nasc,
+                ct.id_contato, ct.tipo_contato, ct.info_contato,
+                e.id_endereco, e.cep, e.cidade, e.rua, e.uf, e.numero
+            FROM clientes AS c
+            JOIN contatos AS ct ON c.id_contato = ct.id_contato
+            JOIN enderecos AS e ON c.id_endereco = e.id_endereco
+            """
         )
         data = cursor.fetchall()
     except Exception as e:
@@ -20,18 +32,29 @@ async def list_clientes():
     finally:
         cursor.close()
         connection.close()
-    return [
-        Cliente(
-            id_cliente=i[0],
-            cpf=i[1],
-            pnome=i[2],
-            unome=i[3],
-            data_nasc=i[4],
-            id_contato=i[5],
-            id_endereco=i[6],
-        )
-        for i in data
-    ]
+        return [
+            Cliente(
+                id_cliente=row["id_cliente"],
+                cpf=row["cpf"],
+                pnome=row["pnome"],
+                unome=row["unome"],
+                data_nasc=row["data_nasc"],
+                contato=Contato(
+                    id_contato=row["id_contato"],
+                    tipo_contato=row["tipo_contato"],
+                    info_contato=row["info_contato"],
+                ),
+                endereco=Endereco(
+                    id_endereco=row["id_endereco"],
+                    cep=row["cep"],
+                    cidade=row["cidade"],
+                    rua=row["rua"],
+                    uf=row["uf"],
+                    numero=row["numero"],
+                ),
+            )
+            for row in data
+        ]
 
 
 @router.post("/create")
@@ -47,8 +70,8 @@ async def create_cliente(cliente: Cliente):
                 cliente.pnome,
                 cliente.unome,
                 cliente.data_nasc,
-                cliente.id_contato,
-                cliente.id_endereco,
+                cliente.contato,
+                cliente.endereco,
             ),
         )
     except Exception as e:
