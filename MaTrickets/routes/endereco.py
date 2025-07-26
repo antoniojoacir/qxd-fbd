@@ -10,10 +10,16 @@ router = APIRouter()
 async def list_enderecos():
     connection = db_connect()
     cursor = connection.cursor()
-    cursor.execute("SELECT id_endereco, cep, cidade, rua, uf, numero FROM enderecos")
-    data = cursor.fetchall()
-    cursor.close()
-    connection.close()
+    try:
+        cursor.execute(
+            "SELECT id_endereco, cep, cidade, rua, uf, numero FROM enderecos"
+        )
+        data = cursor.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"NOK: {e}")
+    finally:
+        cursor.close()
+        connection.close()
     return [
         Endereco(
             id_endereco=i[0], cep=i[1], cidade=i[2], rua=i[3], uf=i[4], numero=i[5]
@@ -26,21 +32,25 @@ async def list_enderecos():
 async def get_endereco_by_id(id: int):
     connection = db_connect()
     cursor = connection.cursor()
-    cursor.execute(
-        "SELECT id_endereco, cep, cidade, rua, uf, numero FROM enderecos WHERE id_endereco = %s",
-        (id,),
-    )
-    endereco = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    if endereco:
+    try:
+        cursor.execute(
+            "SELECT id_endereco, cep, cidade, rua, uf, numero FROM enderecos WHERE id_endereco = %s",
+            (id,),
+        )
+        data = cursor.fetchone()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"NOK: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+    if data:
         return Endereco(
-            id_endereco=endereco[0],
-            cep=endereco[1],
-            cidade=endereco[2],
-            rua=endereco[3],
-            uf=endereco[4],
-            numero=endereco[5],
+            id_endereco=data[0],
+            cep=data[1],
+            cidade=data[2],
+            rua=data[3],
+            uf=data[4],
+            numero=data[5],
         )
 
 
@@ -50,7 +60,7 @@ async def create_endereco(endereco: Endereco):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "INSERT INTO enderecos (id_endereco, cep, cidade, rua, uf, numero) VALUES (%s, %s, %s, %s,)",
+            "INSERT INTO enderecos (id_endereco, cep, cidade, rua, uf, numero) VALUES (%s, %s, %s, %s, %s)",
             (
                 endereco.id_endereco,
                 endereco.cep,
@@ -78,7 +88,7 @@ async def delete_endereco(id_endereco: int):
         connection.commit()
     except Exception as e:
         connection.rollback()
-        raise HTTPException(status_code=400, detail=f"Err: {e}")
+        raise HTTPException(status_code=400, detail=f"NOK: {e}")
     finally:
         cursor.close()
         connection.close()
