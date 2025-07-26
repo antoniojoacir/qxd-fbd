@@ -1,8 +1,22 @@
 from fastapi import APIRouter, HTTPException
+from models.contato import Contato
+from env.db import db_connect
 
 router = APIRouter()
 
 
 @router.get("/list/")
 async def get_contato():
-    return {"OK": "Sucesso"}
+    connection = db_connect()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        "SELECT id_contato, tipo_contato, info_contato FROM contatos",
+    )
+
+    data = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return [
+        Contato(id_contato=i[0], tipo_contato=i[1], info_contato=i[2]) for i in data
+    ]
