@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
 from models.endereco import Endereco
+from models.endereco import EnderecoUpdate
 from env.db import db_connect
 
 router = APIRouter()
@@ -12,7 +13,10 @@ async def list_enderecos():
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "SELECT id_endereco, cep, cidade, rua, uf, numero FROM enderecos"
+            """
+            SELECT id_endereco, cep, cidade, rua, uf, numero 
+            FROM enderecos
+            """
         )
         data = cursor.fetchall()
     except Exception as e:
@@ -34,7 +38,10 @@ async def get_endereco_by_id(id: int):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "SELECT id_endereco, cep, cidade, rua, uf, numero FROM enderecos WHERE id_endereco = %s",
+            """
+            SELECT id_endereco, cep, cidade, rua, uf, numero 
+            FROM enderecos WHERE id_endereco = %s
+            """,
             (id,),
         )
         data = cursor.fetchone()
@@ -60,7 +67,10 @@ async def create_endereco(endereco: Endereco):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "INSERT INTO enderecos (id_endereco, cep, cidade, rua, uf, numero) VALUES (%s, %s, %s, %s, %s)",
+            """
+            INSERT INTO enderecos (id_endereco, cep, cidade, rua, uf, numero) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
             (
                 endereco.id_endereco,
                 endereco.cep,
@@ -70,13 +80,56 @@ async def create_endereco(endereco: Endereco):
                 endereco.numero,
             ),
         )
+        connection.commit()
     except Exception as e:
         connection.rollback()
         raise HTTPException(status_code=400, detail=f"NOK: {e}")
     finally:
         cursor.close()
         connection.close()
-    return "OK"
+    return {"OK": "Endereço criado com sucesso"}
+
+
+@router.patch("/update/{id}")
+async def update_endereco(id: int, endereco: EnderecoUpdate):
+    connection = db_connect()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT id_endereco 
+            FROM enderecos 
+            WHERE id_endereco=%s
+            """,
+            (id,),
+        )
+        if not cursor.fetchone():
+            raise HTTPException(
+                status_code=404, detail={"NOK": "Endereço não encontrado"}
+            )
+        cursor.execute(
+            """
+            UPDATE enderecos
+            SET cep=%s, cidade=%s, rua=%s, uf=%s, numero=%s
+            WHERE id_endereco=%s
+            """,
+            (
+                endereco.cep,
+                endereco.cidade,
+                endereco.rua,
+                endereco.uf,
+                endereco.numero,
+                id,
+            ),
+        )
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=400, detail={"NOK": f"{e}"})
+    finally:
+        cursor.close()
+        connection.close()
+    return {"OK": f"Endereço {id} atualizado com sucesso"}
 
 
 @router.delete("/delete/{id}")
@@ -84,7 +137,13 @@ async def delete_endereco(id_endereco: int):
     connection = db_connect()
     cursor = connection.cursor()
     try:
-        cursor.execute("DELETE FROM enderecos WHERE id_endereco=%s", (id_endereco,))
+        cursor.execute(
+            """
+            DELETE FROM enderecos 
+            WHERE id_endereco=%s
+            """,
+            (id_endereco,),
+        )
         connection.commit()
     except Exception as e:
         connection.rollback()

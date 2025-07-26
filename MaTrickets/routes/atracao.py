@@ -43,12 +43,15 @@ async def get_atracao_by_id(id: int):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "SELECT \
-                a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, \
-                c.id_contato, c.tipo_contato, c.info_contato \
-            FROM atracoes AS a \
-            JOIN contatos AS c ON c.id_contato = a.id_contato \
-            WHERE id_atracao = %s",
+            """
+            SELECT
+                a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, 
+                c.id_contato, c.tipo_contato, c.info_contato 
+            FROM atracoes AS a 
+            JOIN contatos AS c 
+            ON c.id_contato = a.id_contato 
+            WHERE id_atracao = %s
+            """,
             (id,),
         )
         data = cursor.fetchone()
@@ -69,7 +72,7 @@ async def get_atracao_by_id(id: int):
                 info_contato=data[6],
             ),
         )
-    return HTTPException(status_code=404, detail={"NOK": " Atração não encontrada"})
+    raise HTTPException(status_code=404, detail=f"NOK: Atração {id} não encontrada")
 
 
 @router.post("/create")
@@ -78,8 +81,10 @@ async def create_atracao(atracao: Atracao):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "INSERT INTO atracoes (id_atracao, cnpj, nome_atracao, tipo_atracao, id_contato) \
-                VALUES (%s, %s, %s, %s, NULL)",
+            """
+            INSERT INTO atracoes (id_atracao, cnpj, nome_atracao, tipo_atracao, id_contato) 
+            VALUES (%s, %s, %s, %s, NULL)
+            """,
             (
                 atracao.id_atracao,
                 atracao.cnpj,
@@ -88,18 +93,28 @@ async def create_atracao(atracao: Atracao):
             ),
         )
         cursor.execute(
-            "SELECT id_contato FROM contatos WHERE id_contato=%s",
+            """
+            SELECT id_contato 
+            FROM contatos 
+            WHERE id_contato=%s
+            """,
             (atracao.contato.id_contato,),
         )
         contato = cursor.fetchone()
         if contato:
             cursor.execute(
-                "UPDATE atracoes SET id_contato=%s WHERE id_atracao=%s",
+                """
+                UPDATE atracoes SET id_contato=%s 
+                WHERE id_atracao=%s
+                """,
                 (contato[0], atracao.id_atracao),
             )
         else:
             cursor.execute(
-                "INSERT INTO contatos (id_contato, tipo_contato, info_contato) values (%s, %s, %s)",
+                """
+                INSERT INTO contatos (id_contato, tipo_contato, info_contato) 
+                VALUES (%s, %s, %s)
+                """,
                 (
                     atracao.contato.id_contato,
                     atracao.contato.tipo_contato,
@@ -107,7 +122,11 @@ async def create_atracao(atracao: Atracao):
                 ),
             )
             cursor.execute(
-                "UPDATE atracoes SET id_contato=%s WHERE id_atracao=%s",
+                """
+                UPDATE atracoes 
+                SET id_contato=%s 
+                WHERE id_atracao=%s
+                """,
                 (atracao.contato.id_contato, atracao.id_atracao),
             )
         connection.commit()
