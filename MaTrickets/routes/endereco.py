@@ -28,7 +28,7 @@ async def create_endereco(endereco: Endereco):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "INSERT INTO enderecos (id_endereco, cep, cidade, rua, uf, numero) VALUES (%s, %s, %s, %s,)",
+            "INSERT INTO enderecos (id_endereco, cep, cidade, rua, uf, numero) VALUES (%s, %s, %s, %s, %s)",
             (
                 endereco.id_endereco,
                 endereco.cep,
