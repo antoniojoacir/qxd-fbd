@@ -14,10 +14,10 @@ async def list_atracoes():
     try:
         cursor.execute(
             "SELECT \
-            a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, \
-            c.id_contato, c.tipo_contato, c.info_contato \
-        FROM atracoes AS a \
-        JOIN contatos AS c ON c.id_contato = a.id_contato"
+                a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, \
+                c.id_contato, c.tipo_contato, c.info_contato \
+            FROM atracoes AS a \
+            JOIN contatos AS c ON c.id_contato = a.id_contato"
         )
         data = cursor.fetchall()
     except Exception as e:
@@ -35,6 +35,41 @@ async def list_atracoes():
         )
         for i in data
     ]
+
+
+@router.get("/list/{id}")
+async def get_atracao_by_id(id: int):
+    connection = db_connect()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            "SELECT \
+                a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, \
+                c.id_contato, c.tipo_contato, c.info_contato \
+            FROM atracoes AS a \
+            JOIN contatos AS c ON c.id_contato = a.id_contato \
+            WHERE id_atracao = %s",
+            (id,),
+        )
+        data = cursor.fetchone()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"NOK: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+    if data:
+        return Atracao(
+            id_atracao=data[0],
+            cnpj=data[1],
+            nome_atracao=data[2],
+            tipo_atracao=data[3],
+            contato=Contato(
+                id_contato=data[4],
+                tipo_contato=data[5],
+                info_contato=data[6],
+            ),
+        )
+    return HTTPException(status_code=404, detail={"NOK": " Atração não encontrada"})
 
 
 @router.post("/create")
