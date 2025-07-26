@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
+from models.contato import Contato
 from models.atracao import Atracao
 from env.db import db_connect
 
@@ -10,13 +11,23 @@ router = APIRouter()
 async def list_atracoes():
     connection = db_connect()
     cursor = connection.cursor()
-    cursor.execute("SELECT id_atracao, cnpj, nome_atracao, tipo_atracao, id_contato FROM atracoes")
+    cursor.execute(
+        "SELECT \
+            a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, \
+            c.id_contato, c.tipo_contato, c.info_contato \
+        FROM atracoes AS a \
+        JOIN contatos AS c ON c.id_contato = a.id_contato"
+    )
     data = cursor.fetchall()
     cursor.close()
     connection.close()
     return [
         Atracao(
-            id_atracao=i[0], cnpj=i[1], nome_atracao=i[2], tipo_atracao=i[3], id_contato=i[4]
+            id_atracao=i[0],
+            cnpj=i[1],
+            nome_atracao=i[2],
+            tipo_atracao=i[3],
+            contato=Contato(id_contato=i[4], tipo_contato=i[5], info_contato=i[6]),
         )
         for i in data
     ]
@@ -34,7 +45,7 @@ async def create_atracao(atracao: Atracao):
                 atracao.cnpj,
                 atracao.nome_atracao,
                 atracao.tipo_atracao,
-                atracao.id_contato,
+                atracao.contato,
             ),
         )
     except Exception as e:
