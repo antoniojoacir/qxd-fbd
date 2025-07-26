@@ -4,7 +4,6 @@ from datetime import date, time
 from models.endereco import Endereco
 from models.contato import Contato
 
-
 class Evento(BaseModel):
     id_evento: int
     titulo: str

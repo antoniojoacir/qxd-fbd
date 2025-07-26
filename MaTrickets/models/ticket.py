@@ -1,6 +1,4 @@
 from pydantic import BaseModel
-from typing import Optional
-from datetime import date
 from models.cliente import Cliente
 from models.evento import Evento
 
