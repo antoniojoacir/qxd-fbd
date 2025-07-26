@@ -78,7 +78,8 @@ async def create_atracao(atracao: Atracao):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "INSERT INTO atracoes (id_atracao, cnpj, nome_atracao, tipo_atracao, id_contato) VALUES (%s, %s, %s, %s, NULL)",
+            "INSERT INTO atracoes (id_atracao, cnpj, nome_atracao, tipo_atracao, id_contato) \
+                VALUES (%s, %s, %s, %s, NULL)",
             (
                 atracao.id_atracao,
                 atracao.cnpj,
@@ -87,17 +88,28 @@ async def create_atracao(atracao: Atracao):
             ),
         )
         cursor.execute(
-            "INSERT INTO contatos (id_contato, tipo_contato, info_contato) values (%s, %s, %s)",
-            (
-                atracao.contato.id_contato,
-                atracao.contato.tipo_contato,
-                atracao.contato.info_contato,
-            ),
+            "SELECT id_contato FROM contatos WHERE id_contato=%s",
+            (atracao.contato.id_contato,),
         )
-        cursor.execute(
-            "UPDATE atracoes SET id_contato=%s WHERE id_atracao=%s",
-            (atracao.contato.id_contato, atracao.id_atracao),
-        )
+        contato = cursor.fetchone()
+        if contato:
+            cursor.execute(
+                "UPDATE atracoes SET id_contato=%s WHERE id_atracao=%s",
+                (contato[0], atracao.id_atracao),
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO contatos (id_contato, tipo_contato, info_contato) values (%s, %s, %s)",
+                (
+                    atracao.contato.id_contato,
+                    atracao.contato.tipo_contato,
+                    atracao.contato.info_contato,
+                ),
+            )
+            cursor.execute(
+                "UPDATE atracoes SET id_contato=%s WHERE id_atracao=%s",
+                (atracao.contato.id_contato, atracao.id_atracao),
+            )
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -105,4 +117,20 @@ async def create_atracao(atracao: Atracao):
     finally:
         cursor.close()
         connection.close()
-    return "OK"
+    return {"OK": "Atração criada com sucesso"}
+
+
+@router.delete("/delete/{id}")
+async def delete_atracao(id: int):
+    connection = db_connect()
+    cursor = connection.cursor()
+    try:
+        cursor.execute("DELETE FROM atracoes WHERE id_atracao = %s", (id,))
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=400, detail=f"NOK: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+    return {"OK": f"Atração {id} removida"}
