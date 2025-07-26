@@ -10,12 +10,16 @@ router = APIRouter()
 async def list_clientes():
     connection = db_connect()
     cursor = connection.cursor()
-    cursor.execute(
-        "SELECT id_cliente, cpf, pnome, unome, data_nasc, id_contato, id_endereco FROM clientes"
-    )
-    data = cursor.fetchall()
-    cursor.close()
-    connection.close()
+    try:
+        cursor.execute(
+            "SELECT id_cliente, cpf, pnome, unome, data_nasc, id_contato, id_endereco FROM clientes"
+        )
+        data = cursor.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"NOK: {e}")
+    finally:
+        cursor.close()
+        connection.close()
     return [
         Cliente(
             id_cliente=i[0],
@@ -36,13 +40,13 @@ async def create_cliente(cliente: Cliente):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "INSERT INTO clientes (id_cliente, cpf, pnome, unome, data_nascimento, id_contato, id_endereco) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            "INSERT INTO clientes (id_cliente, cpf, pnome, unome, data_nasc, id_contato, id_endereco) VALUES (%s, %s, %s, %s, %s, %s, %s)",
             (
                 cliente.id_cliente,
                 cliente.cpf,
                 cliente.pnome,
                 cliente.unome,
-                cliente.data_nascimento,
+                cliente.data_nasc,
                 cliente.id_contato,
                 cliente.id_endereco,
             ),
