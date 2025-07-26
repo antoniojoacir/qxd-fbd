@@ -22,6 +22,28 @@ async def list_enderecos():
     ]
 
 
+@router.get("/get/{id}", response_model=Endereco)
+async def get_endereco_by_id(id: int):
+    connection = db_connect()
+    cursor = connection.cursor()
+    cursor.execute(
+        "SELECT id_endereco, cep, cidade, rua, uf, numero FROM enderecos WHERE id_endereco = %s",
+        (id,),
+    )
+    endereco = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    if endereco:
+        return Endereco(
+            id_endereco=endereco[0],
+            cep=endereco[1],
+            cidade=endereco[2],
+            rua=endereco[3],
+            uf=endereco[4],
+            numero=endereco[5],
+        )
+
+
 @router.post("/create")
 async def create_endereco(endereco: Endereco):
     connection = db_connect()
@@ -45,3 +67,14 @@ async def create_endereco(endereco: Endereco):
         cursor.close()
         connection.close()
     return "OK"
+
+
+@router.delete("/delete/{id}")
+async def delete_endereco(id_endereco: int):
+    connection = db_connect()
+    cursor = connection.cursor()
+    cursor.execute("DELETE FROM enderecos WHERE id_endereco=%s", (id_endereco,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return {"OK": "Endereço removido com sucesso"}

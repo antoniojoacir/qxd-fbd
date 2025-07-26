@@ -14,7 +14,7 @@ source .venv
 Pacotes a serem instalados
 
 ```bash
-pip install -r requiments.txt
+pip install -r requeriments.txt
 ```
 
 Para a conexão ao banco de dados, você vai precisar criar o arquivo `db.py` dentro do diretorio env
