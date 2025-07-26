@@ -73,8 +73,13 @@ async def create_endereco(endereco: Endereco):
 async def delete_endereco(id_endereco: int):
     connection = db_connect()
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM enderecos WHERE id_endereco=%s", (id_endereco,))
-    connection.commit()
-    cursor.close()
-    connection.close()
+    try:
+        cursor.execute("DELETE FROM enderecos WHERE id_endereco=%s", (id_endereco,))
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=400, detail=f"Err: {e}")
+    finally:
+        cursor.close()
+        connection.close()
     return {"OK": "Endereço removido com sucesso"}
