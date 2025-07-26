@@ -11,16 +11,20 @@ router = APIRouter()
 async def list_atracoes():
     connection = db_connect()
     cursor = connection.cursor()
-    cursor.execute(
-        "SELECT \
+    try:
+        cursor.execute(
+            "SELECT \
             a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, \
             c.id_contato, c.tipo_contato, c.info_contato \
         FROM atracoes AS a \
         JOIN contatos AS c ON c.id_contato = a.id_contato"
-    )
-    data = cursor.fetchall()
-    cursor.close()
-    connection.close()
+        )
+        data = cursor.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"NOK: {e}")
+    finally:
+        cursor.close()
+        connection.close()
     return [
         Atracao(
             id_atracao=i[0],
@@ -39,15 +43,27 @@ async def create_atracao(atracao: Atracao):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "INSERT INTO atracoes (id_atracao, cnpj, nome_atracao, tipo_atracao, id_contato) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO atracoes (id_atracao, cnpj, nome_atracao, tipo_atracao, id_contato) VALUES (%s, %s, %s, %s, NULL)",
             (
                 atracao.id_atracao,
                 atracao.cnpj,
                 atracao.nome_atracao,
                 atracao.tipo_atracao,
-                atracao.contato,
             ),
         )
+        cursor.execute(
+            "INSERT INTO contatos (id_contato, tipo_contato, info_contato) values (%s, %s, %s)",
+            (
+                atracao.contato.id_contato,
+                atracao.contato.tipo_contato,
+                atracao.contato.info_contato,
+            ),
+        )
+        cursor.execute(
+            "UPDATE atracoes SET id_contato=%s WHERE id_atracao=%s",
+            (atracao.contato.id_contato, atracao.id_atracao),
+        )
+        connection.commit()
     except Exception as e:
         connection.rollback()
         raise HTTPException(status_code=400, detail=f"NOK: {e}")
