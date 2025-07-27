@@ -1,23 +1,28 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
 from models.contato import Contato
-from models.atracao import Atracao
+from models.atracao import AtracaoShow
+from models.atracao import AtracaoCreate
+from models.atracao import AtracaoUpdate
 from env.db import db_connect
 
 router = APIRouter()
 
 
-@router.get("/list", response_model=List[Atracao])
+@router.get("/list", response_model=List[AtracaoShow])
 async def list_atracoes():
     connection = db_connect()
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "SELECT \
-                a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, \
-                c.id_contato, c.tipo_contato, c.info_contato \
-            FROM atracoes AS a \
-            JOIN contatos AS c ON c.id_contato = a.id_contato"
+            """
+            SELECT 
+                a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, 
+                c.id_contato, c.tipo_contato, c.info_contato 
+            FROM atracoes AS a 
+            JOIN contatos AS c 
+            ON c.id_contato = a.id_contato
+            """
         )
         data = cursor.fetchall()
     except Exception as e:
@@ -26,7 +31,7 @@ async def list_atracoes():
         cursor.close()
         connection.close()
     return [
-        Atracao(
+        AtracaoShow(
             id_atracao=i[0],
             cnpj=i[1],
             nome_atracao=i[2],
@@ -61,7 +66,7 @@ async def get_atracao_by_id(id: int):
         cursor.close()
         connection.close()
     if data:
-        return Atracao(
+        return AtracaoShow(
             id_atracao=data[0],
             cnpj=data[1],
             nome_atracao=data[2],
@@ -76,59 +81,37 @@ async def get_atracao_by_id(id: int):
 
 
 @router.post("/create")
-async def create_atracao(atracao: Atracao):
+async def create_atracao(atracao: AtracaoCreate):
     connection = db_connect()
     cursor = connection.cursor()
     try:
-        cursor.execute(
-            """
-            INSERT INTO atracoes (id_atracao, cnpj, nome_atracao, tipo_atracao, id_contato) 
-            VALUES (%s, %s, %s, %s, NULL)
-            """,
-            (
-                atracao.id_atracao,
-                atracao.cnpj,
-                atracao.nome_atracao,
-                atracao.tipo_atracao,
-            ),
-        )
         cursor.execute(
             """
             SELECT id_contato 
             FROM contatos 
             WHERE id_contato=%s
             """,
-            (atracao.contato.id_contato,),
+            (atracao.id_contato,),
         )
         contato = cursor.fetchone()
-        if contato:
-            cursor.execute(
-                """
-                UPDATE atracoes SET id_contato=%s 
-                WHERE id_atracao=%s
-                """,
-                (contato[0], atracao.id_atracao),
+        if not contato:
+            raise HTTPException(
+                status_code=404,
+                detail={"NOK": f"Contato {atracao.id_contato} não encontrado"},
             )
-        else:
-            cursor.execute(
-                """
-                INSERT INTO contatos (id_contato, tipo_contato, info_contato) 
-                VALUES (%s, %s, %s)
-                """,
-                (
-                    atracao.contato.id_contato,
-                    atracao.contato.tipo_contato,
-                    atracao.contato.info_contato,
-                ),
-            )
-            cursor.execute(
-                """
-                UPDATE atracoes 
-                SET id_contato=%s 
-                WHERE id_atracao=%s
-                """,
-                (atracao.contato.id_contato, atracao.id_atracao),
-            )
+        cursor.execute(
+            """
+            INSERT INTO atracoes (id_atracao, cnpj, nome_atracao, tipo_atracao, id_contato) 
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (
+                atracao.id_atracao,
+                atracao.cnpj,
+                atracao.nome_atracao,
+                atracao.tipo_atracao,
+                atracao.id_contato
+            ),
+        )
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -139,12 +122,58 @@ async def create_atracao(atracao: Atracao):
     return {"OK": "Atração criada com sucesso"}
 
 
-@router.delete("/delete/{id}")
-async def delete_atracao(id: int):
+@router.patch("/update/{id}")
+async def update_atracao(index: int, atracao: AtracaoUpdate):
     connection = db_connect()
     cursor = connection.cursor()
     try:
-        cursor.execute("DELETE FROM atracoes WHERE id_atracao = %s", (id,))
+        cursor.execute(
+            """
+            SELECT id_atracao
+            FROM atracoes
+            WHERE id_atracao=%s
+            """,
+            (index,),
+        )
+        if not cursor.fetchone():
+            raise HTTPException(
+                status_code=404, detail={"NOK": "Atração não encontrada"}
+            )
+        cursor.execute(
+            """
+            UPDATE atracoes
+            SET cnpj=%s, nome_atracao=%s, tipo_atracao=%s, id_contato=%s
+            WHERE id_atracao=%s
+            """,
+            (
+                atracao.cnpj,
+                atracao.nome_atracao,
+                atracao.tipo_atracao,
+                atracao.id_contato,
+                index,
+            ),
+        )
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=400, detail={"NOK": f"{e}"})
+    finally:
+        cursor.close()
+        connection.close()
+    return {"OK": f"Atração {index} atualizada com sucesso."}
+
+@router.delete("/delete/{id}")
+async def delete_atracao(index: int):
+    connection = db_connect()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            """
+            DELETE FROM atracoes 
+            WHERE id_atracao = %s
+            """,
+            (index,),
+        )
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -152,4 +181,4 @@ async def delete_atracao(id: int):
     finally:
         cursor.close()
         connection.close()
-    return {"OK": f"Atração {id} removida"}
+    return {"OK": f"Atração {index} removida"}
