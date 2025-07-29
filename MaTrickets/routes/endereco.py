@@ -33,7 +33,7 @@ async def list_enderecos():
 
 
 @router.get("/get/{id}", response_model=Endereco)
-async def get_endereco_by_id(index: int):
+async def get_endereco_by_id(id: int):
     connection = db_connect()
     cursor = connection.cursor()
     try:
@@ -43,7 +43,7 @@ async def get_endereco_by_id(index: int):
             FROM enderecos 
             WHERE id_endereco=%s
             """,
-            (index,),
+            (id,),
         )
         data = cursor.fetchone()
     except Exception as e:
@@ -60,7 +60,7 @@ async def get_endereco_by_id(index: int):
             uf=data[4],
             numero=data[5],
         )
-    raise HTTPException(status_code=404, detail=f"NOK: Endereço {index} não encontrado")
+    raise HTTPException(status_code=404, detail=f"NOK: Endereço {id} não encontrado")
 
 
 @router.post("/create")
@@ -93,7 +93,13 @@ async def create_endereco(endereco: Endereco):
 
 
 @router.patch("/update/{id}")
-async def update_endereco(index: int, endereco: EnderecoUpdate):
+async def update_endereco(id: int, endereco: EnderecoUpdate):
+    data = {key: value for key, value in endereco if value is not None}
+    if not data:
+        raise HTTPException(
+            status_code=404,
+            detail={"NOK": "Nenhum campo para atualizar foi fornecido."},
+        )
     connection = db_connect()
     cursor = connection.cursor()
     try:
@@ -106,23 +112,18 @@ async def update_endereco(index: int, endereco: EnderecoUpdate):
             (id,),
         )
         if not cursor.fetchone():
-            raise HTTPException(
-                status_code=404, detail={"NOK": "Endereço não encontrado"}
-            )
+            raise HTTPException(status_code=404, detail=f"Endereço {id} não existe")
+
+        set_ = ", ".join([f"{key}=%s" for key in data.keys()])
+        values = list(data.values())
+        values.append(id)
         cursor.execute(
-            """
+            f"""
             UPDATE enderecos
-            SET cep=%s, cidade=%s, rua=%s, uf=%s, numero=%s
+            SET {set_}
             WHERE id_endereco=%s
             """,
-            (
-                endereco.cep,
-                endereco.cidade,
-                endereco.rua,
-                endereco.uf,
-                endereco.numero,
-                id,
-            ),
+            tuple(values),
         )
         connection.commit()
     except Exception as e:
