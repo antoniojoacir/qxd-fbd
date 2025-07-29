@@ -33,20 +33,21 @@ async def list_enderecos():
 
 
 @router.get("/get/{id}", response_model=Endereco)
-async def get_endereco_by_id(id: int):
+async def get_endereco_by_id(index: int):
     connection = db_connect()
     cursor = connection.cursor()
     try:
         cursor.execute(
             """
             SELECT id_endereco, cep, cidade, rua, uf, numero 
-            FROM enderecos WHERE id_endereco = %s
+            FROM enderecos 
+            WHERE id_endereco=%s
             """,
-            (id,),
+            (index,),
         )
         data = cursor.fetchone()
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"NOK: {e}")
+        raise HTTPException(status_code=400, detail=f"NOK {e}")
     finally:
         cursor.close()
         connection.close()
@@ -59,6 +60,7 @@ async def get_endereco_by_id(id: int):
             uf=data[4],
             numero=data[5],
         )
+    raise HTTPException(status_code=404, detail=f"NOK: Endereço {index} não encontrado")
 
 
 @router.post("/create")
@@ -91,7 +93,7 @@ async def create_endereco(endereco: Endereco):
 
 
 @router.patch("/update/{id}")
-async def update_endereco(id: int, endereco: EnderecoUpdate):
+async def update_endereco(index: int, endereco: EnderecoUpdate):
     connection = db_connect()
     cursor = connection.cursor()
     try:

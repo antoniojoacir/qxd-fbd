@@ -12,8 +12,8 @@ class Endereco(BaseModel):
 
 
 class EnderecoUpdate(BaseModel):
-    cep: str
-    cidade: str
-    rua: str
-    uf: str
+    cep: Optional[str] = None
+    cidade: Optional[str] = None
+    rua: Optional[str] = None
+    uf: Optional[str] = None
     numero: Optional[int] = None

@@ -42,8 +42,8 @@ async def list_atracoes():
     ]
 
 
-@router.get("/list/{id}")
-async def get_atracao_by_id(id: int):
+@router.get("/get/{id}", response_model=Atracao)
+async def get_atracao_by_id(index: int):
     connection = db_connect()
     cursor = connection.cursor()
     try:
@@ -57,7 +57,7 @@ async def get_atracao_by_id(id: int):
             ON c.id_contato = a.id_contato 
             WHERE id_atracao = %s
             """,
-            (id,),
+            (index,),
         )
         data = cursor.fetchone()
     except Exception as e:
@@ -77,7 +77,7 @@ async def get_atracao_by_id(id: int):
                 info_contato=data[6],
             ),
         )
-    raise HTTPException(status_code=404, detail=f"NOK: Atração {id} não encontrada")
+    raise HTTPException(status_code=404, detail=f"NOK: Atração {index} não encontrada")
 
 
 @router.post("/create")
@@ -93,8 +93,7 @@ async def create_atracao(atracao: AtracaoCreate):
             """,
             (atracao.id_contato,),
         )
-        contato = cursor.fetchone()
-        if not contato:
+        if not cursor.fetchone():
             raise HTTPException(
                 status_code=404,
                 detail={"NOK": f"Contato {atracao.id_contato} não encontrado"},
@@ -124,6 +123,7 @@ async def create_atracao(atracao: AtracaoCreate):
 
 @router.patch("/update/{id}")
 async def update_atracao(index: int, atracao: AtracaoUpdate):
+    data = {key: value for key, value in atracao if value is not None}
     connection = db_connect()
     cursor = connection.cursor()
     try:
