@@ -43,7 +43,7 @@ async def list_atracoes():
 
 
 @router.get("/get/{id}", response_model=Atracao)
-async def get_atracao_by_id(index: int):
+async def get_atracao_by_id(id: int):
     connection = db_connect()
     cursor = connection.cursor()
     try:
@@ -57,7 +57,7 @@ async def get_atracao_by_id(index: int):
             ON c.id_contato = a.id_contato 
             WHERE id_atracao = %s
             """,
-            (index,),
+            (id,),
         )
         data = cursor.fetchone()
     except Exception as e:
@@ -77,7 +77,7 @@ async def get_atracao_by_id(index: int):
                 info_contato=data[6],
             ),
         )
-    raise HTTPException(status_code=404, detail=f"NOK: Atração {index} não encontrada")
+    raise HTTPException(status_code=404, detail=f"NOK: Atração {id} não encontrada")
 
 
 @router.post("/create")
@@ -122,36 +122,50 @@ async def create_atracao(atracao: AtracaoCreate):
 
 
 @router.patch("/update/{id}")
-async def update_atracao(index: int, atracao: AtracaoUpdate):
+async def update_atracao(id: int, atracao: AtracaoUpdate):
     data = {key: value for key, value in atracao if value is not None}
+    if not data:
+        raise HTTPException(
+            status_code=400,
+            detail={"NOK": "Nenhum campo para atualizar foi fornecido."},
+        )
     connection = db_connect()
     cursor = connection.cursor()
     try:
+        if "id_contato" in data:
+            cursor.execute(
+                """
+                SELECT id_contato
+                FROM contatos
+                WHERE id_contato=%s
+                """,
+                (data["id_contato"],),
+            )
+            if not cursor.fetchone():
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Contato {data["id_contato"]} não encontrado",
+                )
         cursor.execute(
             """
             SELECT id_atracao
             FROM atracoes
             WHERE id_atracao=%s
             """,
-            (index,),
+            (id,),
         )
         if not cursor.fetchone():
-            raise HTTPException(
-                status_code=404, detail={"NOK": "Atração não encontrada"}
-            )
+            raise HTTPException(status_code=404, detail=f"Atração {id} não encontrada")
+        set_ = ", ".join([f"{key}=%s" for key in data.keys()])
+        values = list(data.values())
+        values.append(id)
         cursor.execute(
-            """
+            f"""
             UPDATE atracoes
-            SET cnpj=%s, nome_atracao=%s, tipo_atracao=%s, id_contato=%s
+            SET {set_}
             WHERE id_atracao=%s
             """,
-            (
-                atracao.cnpj,
-                atracao.nome_atracao,
-                atracao.tipo_atracao,
-                atracao.id_contato,
-                index,
-            ),
+            tuple(values),
         )
         connection.commit()
     except Exception as e:
@@ -160,7 +174,7 @@ async def update_atracao(index: int, atracao: AtracaoUpdate):
     finally:
         cursor.close()
         connection.close()
-    return {"OK": f"Atração {index} atualizada com sucesso."}
+    return {"OK": f"Atração {id} atualizada com sucesso."}
 
 
 @router.delete("/delete/{id}")
