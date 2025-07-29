@@ -164,22 +164,35 @@ async def update_atracao(index: int, atracao: AtracaoUpdate):
 
 
 @router.delete("/delete/{id}")
-async def delete_atracao(index: int):
+async def delete_atracao(id: int):
     connection = db_connect()
     cursor = connection.cursor()
     try:
         cursor.execute(
             """
+            SELECT id_atracao
+            FROM atracoes
+            WHERE id_atracao=%s
+            """,
+            (id,),
+        )
+        if not cursor.fetchone():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Atração {id} inexistente.",
+            )
+        cursor.execute(
+            """
             DELETE FROM atracoes 
             WHERE id_atracao = %s
             """,
-            (index,),
+            (id,),
         )
         connection.commit()
     except Exception as e:
         connection.rollback()
-        raise HTTPException(status_code=400, detail=f"NOK: {e}")
+        raise HTTPException(status_code=400, detail=f"NOK {e}")
     finally:
         cursor.close()
         connection.close()
-    return {"OK": f"Atração {index} removida"}
+    return {"OK": f"Atração {id} removida"}
