@@ -23,6 +23,7 @@ CREATE TABLE clientes (
 	pnome VARCHAR(40) NOT NULL,
 	unome VARCHAR(40) NOT NULL,
 	data_nasc DATE NOT NULL,
+	genero VARCHAR(20) NOT NULL,
 
 	-- chaves estrangeiras
 	id_contato INT,
@@ -202,31 +203,50 @@ INSERT INTO contatos (id_contato, tipo_contato, info_contato) VALUES
 (80, 'email', 'contato@showdaluna.com.br');
 
 -- =============================================
---  TABLE: clientes
+--  TABLE: clientes - CORRIGIDA
 -- =============================================
--- 40 clientes, reutilizando os do script anterior.
-INSERT INTO clientes (id_cliente, cpf, pnome, unome, data_nasc, id_contato, id_endereco) VALUES
-(1, '11122233344', 'João', 'Silva', '1990-05-15', 1, 1), (2, '22233344455', 'Maria', 'Oliveira', '1985-09-20', 2, 2),
-(3, '33344455566', 'Pedro', 'Santos', '1992-02-10', 3, 3), (4, '44455566677', 'Ana', 'Souza', '1998-11-30', 4, 4),
-(5, '55566677788', 'Carlos', 'Pereira', '1980-07-25', 5, 5), (6, '66677788899', 'Lucas', 'Costa', '2000-01-05', 6, 6),
-(7, '77788899900', 'Sandra', 'Rodrigues', '1988-04-18', 7, 7), (8, '88899900011', 'Fernando', 'Almeida', '1995-08-12', 8, 8),
-(9, '99900011122', 'Juliana', 'Lima', '1993-06-22', 9, 9), (10, '00011122233', 'Marcos', 'Fernandes', '1983-03-03', 10, 10),
-(11, '12345678901', 'Beatriz', 'Gonçalves', '2001-12-01', 11, 11), (12, '23456789012', 'Rafael', 'Carvalho', '1991-10-14', 12, 12),
-(13, '34567890123', 'Amanda', 'Martins', '1999-07-07', 13, 13), (14, '45678901234', 'Tiago', 'Araujo', '1987-05-28', 14, 14),
-(15, '56789012345', 'Gabriela', 'Barbosa', '1996-09-09', 15, 15), (16, '67890123456', 'Rodrigo', 'Melo', '1982-11-11', 16, 16),
-(17, '78901234567', 'Camila', 'Ribeiro', '1994-01-21', 17, 17), (18, '89012345678', 'Bruno', 'Nunes', '1997-03-13', 18, 18),
-(19, '90123456789', 'Vanessa', 'Gomes', '1989-10-24', 19, 19), (20, '01234567890', 'Felipe', 'Soares', '1986-08-08', 20, 20),
-(21, '11223344556', 'Larissa', 'Dias', '2002-06-16', 21, 21), (22, '22334455667', 'Gustavo', 'Ferreira', '1984-02-24', 22, 22),
-(23, '33445566778', 'Patrícia', 'Alves', '1990-09-19', 23, 23), (24, '44556677889', 'Leonardo', 'Monteiro', '1995-12-31', 24, 24),
-(25, '55667788990', 'Daniela', 'Cardoso', '1981-07-17', 25, 25), (26, '66778899001', 'Vinícius', 'Pinto', '2003-05-05', 26, 26),
-(27, '77889900112', 'Aline', 'Teixeira', '1988-10-10', 27, 27), (28, '88990011223', 'Márcio', 'Correia', '1992-04-04', 28, 28),
-(29, '99001122334', 'Tatiane', 'Santana', '1996-02-29', 29, 29), (30, '00112233445', 'Eduardo', 'Bezerra', '1987-09-01', 30, 30),
-(31, '12121212121', 'Cristina', 'Rocha', '1993-08-14', 31, 31), (32, '34343434343', 'Ricardo', 'Freitas', '1991-06-03', 32, 32),
-(33, '56565656565', 'Simone', 'Campos', '1998-03-25', 33, 33), (34, '78787878787', 'André', 'Vieira', '1985-11-27', 34, 34),
-(35, '90909090909', 'Renata', 'Andrade', '2000-10-02', 35, 35), (36, '13131313131', 'Marcelo', 'Duarte', '1982-01-20', 36, 36),
-(37, '24242424242', 'Flávia', 'Moreira', '1997-07-30', 37, 37), (38, '35353535353', 'Diego', 'Nascimento', '1989-05-18', 38, 38),
-(39, '46464646464', 'Débora', 'Lopes', '1994-04-12', 39, 39),
-(40, '57575757575', 'Antônio', 'Machado', '1980-12-07', 40, 40);
+-- 40 clientes, com a coluna 'genero' adicionada e populada.
+INSERT INTO clientes (id_cliente, cpf, pnome, unome, data_nasc, genero, id_contato, id_endereco) VALUES
+(1, '11122233344', 'João', 'Silva', '1990-05-15', 'Masculino', 1, 1),
+(2, '22233344455', 'Maria', 'Oliveira', '1985-09-20', 'Feminino', 2, 2),
+(3, '33344455566', 'Pedro', 'Santos', '1992-02-10', 'Masculino', 3, 3),
+(4, '44455566677', 'Ana', 'Souza', '1998-11-30', 'Feminino', 4, 4),
+(5, '55566677788', 'Carlos', 'Pereira', '1980-07-25', 'Masculino', 5, 5),
+(6, '66677788899', 'Lucas', 'Costa', '2000-01-05', 'Masculino', 6, 6),
+(7, '77788899900', 'Sandra', 'Rodrigues', '1988-04-18', 'Feminino', 7, 7),
+(8, '88899900011', 'Fernando', 'Almeida', '1995-08-12', 'Masculino', 8, 8),
+(9, '99900011122', 'Juliana', 'Lima', '1993-06-22', 'Feminino', 9, 9),
+(10, '00011122233', 'Marcos', 'Fernandes', '1983-03-03', 'Masculino', 10, 10),
+(11, '12345678901', 'Beatriz', 'Gonçalves', '2001-12-01', 'Feminino', 11, 11),
+(12, '23456789012', 'Rafael', 'Carvalho', '1991-10-14', 'Masculino', 12, 12),
+(13, '34567890123', 'Amanda', 'Martins', '1999-07-07', 'Feminino', 13, 13),
+(14, '45678901234', 'Tiago', 'Araujo', '1987-05-28', 'Masculino', 14, 14),
+(15, '56789012345', 'Gabriela', 'Barbosa', '1996-09-09', 'Feminino', 15, 15),
+(16, '67890123456', 'Rodrigo', 'Melo', '1982-11-11', 'Masculino', 16, 16),
+(17, '78901234567', 'Camila', 'Ribeiro', '1994-01-21', 'Feminino', 17, 17),
+(18, '89012345678', 'Bruno', 'Nunes', '1997-03-13', 'Masculino', 18, 18),
+(19, '90123456789', 'Vanessa', 'Gomes', '1989-10-24', 'Feminino', 19, 19),
+(20, '01234567890', 'Felipe', 'Soares', '1986-08-08', 'Masculino', 20, 20),
+(21, '11223344556', 'Larissa', 'Dias', '2002-06-16', 'Feminino', 21, 21),
+(22, '22334455667', 'Gustavo', 'Ferreira', '1984-02-24', 'Masculino', 22, 22),
+(23, '33445566778', 'Patrícia', 'Alves', '1990-09-19', 'Feminino', 23, 23),
+(24, '44556677889', 'Leonardo', 'Monteiro', '1995-12-31', 'Masculino', 24, 24),
+(25, '55667788990', 'Daniela', 'Cardoso', '1981-07-17', 'Feminino', 25, 25),
+(26, '66778899001', 'Vinícius', 'Pinto', '2003-05-05', 'Masculino', 26, 26),
+(27, '77889900112', 'Aline', 'Teixeira', '1988-10-10', 'Feminino', 27, 27),
+(28, '88990011223', 'Márcio', 'Correia', '1992-04-04', 'Masculino', 28, 28),
+(29, '99001122334', 'Tatiane', 'Santana', '1996-02-29', 'Feminino', 29, 29),
+(30, '00112233445', 'Eduardo', 'Bezerra', '1987-09-01', 'Masculino', 30, 30),
+(31, '12121212121', 'Cristina', 'Rocha', '1993-08-14', 'Feminino', 31, 31),
+(32, '34343434343', 'Ricardo', 'Freitas', '1991-06-03', 'Masculino', 32, 32),
+(33, '56565656565', 'Simone', 'Campos', '1998-03-25', 'Feminino', 33, 33),
+(34, '78787878787', 'André', 'Vieira', '1985-11-27', 'Masculino', 34, 34),
+(35, '90909090909', 'Renata', 'Andrade', '2000-10-02', 'Feminino', 35, 35),
+(36, '13131313131', 'Marcelo', 'Duarte', '1982-01-20', 'Masculino', 36, 36),
+(37, '24242424242', 'Flávia', 'Moreira', '1997-07-30', 'Feminino', 37, 37),
+(38, '35353535353', 'Diego', 'Nascimento', '1989-05-18', 'Masculino', 38, 38),
+(39, '46464646464', 'Débora', 'Lopes', '1994-04-12', 'Feminino', 39, 39),
+(40, '57575757575', 'Antônio', 'Machado', '1980-12-07', 'Masculino', 40, 40);
 
 -- =============================================
 --  TABLE: atracoes
@@ -350,139 +370,3 @@ INSERT INTO tickets (id_ticket, numero, lote, id_cliente, id_evento) VALUES
 (2035, 2026035, 'INTEIRA', 35, 6), (2036, 2026036, 'MEIA-ENTRADA', 36, 7),
 (2037, 2026037, 'INTEIRA', 37, 8), (2038, 2026038, 'MEIA-ENTRADA', 38, 9),
 (2039, 2026039, 'VIP', 39, 10), (2040, 2026040, 'INTEIRA', 40, 11);
-
--- =============================================
---  CONSULTAS 
--- =============================================
-
--- 01. Retorna clientes com o sobrenome que começa com a
--- letra 'R', o numero do ticket e a qual evento esse
--- ticket da acesso.
-SELECT
-  (
-    SELECT pnome || ' ' || unome 
-	FROM clientes AS c
-	WHERE c.id_cliente = t.id_cliente
-  ) AS nome,
-  (
-    SELECT e.titulo 
-	FROM eventos AS e 
-	WHERE e.id_evento = t.id_evento
-  ) AS evento,
-  t.numero AS numero_do_ticket
-FROM
-  tickets AS t
-WHERE
-  t.id_cliente IN (
-    SELECT c.id_cliente 
-	FROM clientes AS c
-	WHERE unome LIKE 'R%'
-  )
-ORDER BY nome;
-
--- 02. retornar os clientes que tem ticket com numero par e qual atração ele 
--- vai ver e o evento precisa ter mais de um ticket vendido
-SELECT c.pnome || ' ' || c.unome AS nome_cliente, a.nome_atracao
-FROM
-  clientes AS c,
-  se_apresenta AS sa,
-  atracoes AS a,
-  (
-    SELECT id_cliente, id_evento
-    FROM tickets
-    WHERE numero % 2 = 0
-      AND id_evento IN (
-        SELECT id_evento
-        FROM tickets
-        GROUP BY id_evento
-        HAVING
-          COUNT(id_ticket) > 1
-      )
-  ) AS tickets_validos
-WHERE
-  c.id_cliente = tickets_validos.id_cliente
-  AND sa.id_evento = tickets_validos.id_evento
-  AND sa.id_atracao = a.id_atracao
-ORDER BY nome_cliente, a.nome_atracao;
-
--- 03. retorna o nome de todas as atrações que irão se apresentar em eventos 
--- localizados na cidade de 'São Paulo'.
-SELECT nome_atracao
-FROM atracoes
-WHERE
-  id_atracao IN (
-    SELECT id_atracao
-    FROM se_apresenta
-    WHERE
-      id_evento IN (
-        SELECT id_evento
-        FROM eventos
-        WHERE id_endereco IN (
-			SELECT id_endereco
-            FROM enderecos
-            WHERE cidade = 'São Paulo'
-          )
-      )
-  )
-ORDER BY nome_atracao;
-
--- 04. retorna o nome completo dos clientes que compraram ingressos para 
--- eventos que começarão a antes de 1º de outubro de 2025.
-SELECT pnome || ' ' || unome AS nome_cliente
-FROM clientes
-WHERE id_cliente IN (
-    SELECT DISTINCT id_cliente
-    FROM tickets
-    WHERE id_evento IN (
-        SELECT id_evento
-        FROM eventos
-        WHERE data_inicio <= '2025-10-01'
-      )
-  )
-ORDER BY nome_cliente;
-
--- 05. Listar o título de todos os eventos que terão a apresentação de pelo menos um 'DJ'.
-SELECT titulo
-FROM eventos
-WHERE id_evento IN (
-    SELECT DISTINCT id_evento
-    FROM se_apresenta
-    WHERE id_atracao IN (
-        SELECT id_atracao
-        FROM atracoes
-        WHERE tipo_atracao = 'DJ'
-      )
-  )
-ORDER BY titulo;
-
--- 06. Obter as informações de contato de todas as atrações 
--- que se apresentarão no 'Festival Rock Brasil'.
-SELECT info_contato, tipo_contato
-FROM contatos
-WHERE id_contato IN (
-    SELECT id_contato
-    FROM atracoes
-    WHERE id_atracao IN (
-        SELECT id_atracao
-        FROM se_apresenta
-        WHERE id_evento = (
-            SELECT id_evento
-            FROM eventos
-            WHERE titulo = 'Festival Rock Brasil'
-          )
-      )
-  )
-ORDER BY tipo_contato;
-
--- 07. Identificar clientes com mais de 35 anos que compraram um ingresso do tipo 'VIP'. 
-SELECT pnome || ' ' || unome AS nome_cliente, data_nasc
-FROM clientes c
-WHERE
-  (DATE '2025-06-30' - c.data_nasc) / 365 > 35
-  AND EXISTS (
-    SELECT 1
-    FROM tickets t
-    WHERE t.id_cliente = c.id_cliente
-      AND t.lote = 'VIP'
-  )
-ORDER BY nome_cliente;
