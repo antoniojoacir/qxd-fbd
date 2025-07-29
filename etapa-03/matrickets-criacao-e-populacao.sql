@@ -370,3 +370,139 @@ INSERT INTO tickets (id_ticket, numero, lote, id_cliente, id_evento) VALUES
 (2035, 2026035, 'INTEIRA', 35, 6), (2036, 2026036, 'MEIA-ENTRADA', 36, 7),
 (2037, 2026037, 'INTEIRA', 37, 8), (2038, 2026038, 'MEIA-ENTRADA', 38, 9),
 (2039, 2026039, 'VIP', 39, 10), (2040, 2026040, 'INTEIRA', 40, 11);
+
+-- =============================================
+--  CONSULTAS 
+-- =============================================
+
+-- 01. Retorna clientes com o sobrenome que começa com a
+-- letra 'R', o numero do ticket e a qual evento esse
+-- ticket da acesso.
+SELECT
+  (
+    SELECT pnome || ' ' || unome 
+	FROM clientes AS c
+	WHERE c.id_cliente = t.id_cliente
+  ) AS nome,
+  (
+    SELECT e.titulo 
+	FROM eventos AS e 
+	WHERE e.id_evento = t.id_evento
+  ) AS evento,
+  t.numero AS numero_do_ticket
+FROM
+  tickets AS t
+WHERE
+  t.id_cliente IN (
+    SELECT c.id_cliente 
+	FROM clientes AS c
+	WHERE unome LIKE 'R%'
+  )
+ORDER BY nome;
+
+-- 02. retornar os clientes que tem ticket com numero par e qual atração ele 
+-- vai ver e o evento precisa ter mais de um ticket vendido
+SELECT c.pnome || ' ' || c.unome AS nome_cliente, a.nome_atracao
+FROM
+  clientes AS c,
+  se_apresenta AS sa,
+  atracoes AS a,
+  (
+    SELECT id_cliente, id_evento
+    FROM tickets
+    WHERE numero % 2 = 0
+      AND id_evento IN (
+        SELECT id_evento
+        FROM tickets
+        GROUP BY id_evento
+        HAVING
+          COUNT(id_ticket) > 1
+      )
+  ) AS tickets_validos
+WHERE
+  c.id_cliente = tickets_validos.id_cliente
+  AND sa.id_evento = tickets_validos.id_evento
+  AND sa.id_atracao = a.id_atracao
+ORDER BY nome_cliente, a.nome_atracao;
+
+-- 03. retorna o nome de todas as atrações que irão se apresentar em eventos 
+-- localizados na cidade de 'São Paulo'.
+SELECT nome_atracao
+FROM atracoes
+WHERE
+  id_atracao IN (
+    SELECT id_atracao
+    FROM se_apresenta
+    WHERE
+      id_evento IN (
+        SELECT id_evento
+        FROM eventos
+        WHERE id_endereco IN (
+			SELECT id_endereco
+            FROM enderecos
+            WHERE cidade = 'São Paulo'
+          )
+      )
+  )
+ORDER BY nome_atracao;
+
+-- 04. retorna o nome completo dos clientes que compraram ingressos para 
+-- eventos que começarão a antes de 1º de outubro de 2025.
+SELECT pnome || ' ' || unome AS nome_cliente
+FROM clientes
+WHERE id_cliente IN (
+    SELECT DISTINCT id_cliente
+    FROM tickets
+    WHERE id_evento IN (
+        SELECT id_evento
+        FROM eventos
+        WHERE data_inicio <= '2025-10-01'
+      )
+  )
+ORDER BY nome_cliente;
+
+-- 05. Listar o título de todos os eventos que terão a apresentação de pelo menos um 'DJ'.
+SELECT titulo
+FROM eventos
+WHERE id_evento IN (
+    SELECT DISTINCT id_evento
+    FROM se_apresenta
+    WHERE id_atracao IN (
+        SELECT id_atracao
+        FROM atracoes
+        WHERE tipo_atracao = 'DJ'
+      )
+  )
+ORDER BY titulo;
+
+-- 06. Obter as informações de contato de todas as atrações 
+-- que se apresentarão no 'Festival Rock Brasil'.
+SELECT info_contato, tipo_contato
+FROM contatos
+WHERE id_contato IN (
+    SELECT id_contato
+    FROM atracoes
+    WHERE id_atracao IN (
+        SELECT id_atracao
+        FROM se_apresenta
+        WHERE id_evento = (
+            SELECT id_evento
+            FROM eventos
+            WHERE titulo = 'Festival Rock Brasil'
+          )
+      )
+  )
+ORDER BY tipo_contato;
+
+-- 07. Identificar clientes com mais de 35 anos que compraram um ingresso do tipo 'VIP'. 
+SELECT pnome || ' ' || unome AS nome_cliente, data_nasc
+FROM clientes c
+WHERE
+  (DATE '2025-06-30' - c.data_nasc) / 365 > 35
+  AND EXISTS (
+    SELECT 1
+    FROM tickets t
+    WHERE t.id_cliente = c.id_cliente
+      AND t.lote = 'VIP'
+  )
+ORDER BY nome_cliente;
