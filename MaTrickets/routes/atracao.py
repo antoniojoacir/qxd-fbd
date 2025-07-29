@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
 from models.contato import Contato
-from models.atracao import AtracaoShow
+from models.atracao import Atracao
 from models.atracao import AtracaoCreate
 from models.atracao import AtracaoUpdate
 from env.db import db_connect
@@ -9,7 +9,7 @@ from env.db import db_connect
 router = APIRouter()
 
 
-@router.get("/list", response_model=List[AtracaoShow])
+@router.get("/list", response_model=List[Atracao])
 async def list_atracoes():
     connection = db_connect()
     cursor = connection.cursor()
@@ -31,7 +31,7 @@ async def list_atracoes():
         cursor.close()
         connection.close()
     return [
-        AtracaoShow(
+        Atracao(
             id_atracao=i[0],
             cnpj=i[1],
             nome_atracao=i[2],
@@ -66,7 +66,7 @@ async def get_atracao_by_id(id: int):
         cursor.close()
         connection.close()
     if data:
-        return AtracaoShow(
+        return Atracao(
             id_atracao=data[0],
             cnpj=data[1],
             nome_atracao=data[2],
@@ -109,7 +109,7 @@ async def create_atracao(atracao: AtracaoCreate):
                 atracao.cnpj,
                 atracao.nome_atracao,
                 atracao.tipo_atracao,
-                atracao.id_contato
+                atracao.id_contato,
             ),
         )
         connection.commit()
@@ -161,6 +161,7 @@ async def update_atracao(index: int, atracao: AtracaoUpdate):
         cursor.close()
         connection.close()
     return {"OK": f"Atração {index} atualizada com sucesso."}
+
 
 @router.delete("/delete/{id}")
 async def delete_atracao(index: int):

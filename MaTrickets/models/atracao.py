@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from models.contato import Contato
 
 
-class AtracaoShow(BaseModel):
+class Atracao(BaseModel):
     id_atracao: int
     cnpj: str
     nome_atracao: str
