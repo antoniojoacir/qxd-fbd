@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 from models.cliente import Cliente
 from models.evento import Evento
 

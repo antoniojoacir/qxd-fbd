@@ -1,15 +1,15 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
 from models.evento import Evento
-from models.ticket import Ticket
+from models.ticket import Ticket, TicketCreate, TicketUpdate
 from models.cliente import Cliente
 from env.db import db_connect
 
 router = APIRouter()
 
 
-@router.get("/list", response_model=List[Evento])
-async def list_eventos():
+@router.get("/list", response_model=List[Ticket])
+async def list_tickets():
     connection = db_connect()
     cursor = connection.cursor()
     try:
@@ -62,7 +62,7 @@ async def list_eventos():
     ]
 
 
-@router.get("/get/{id}", response_model=Evento)
+@router.get("/get/{id}", response_model=Ticket)
 async def get_ticket_by_id(id: int):
     connection = db_connect()
     cursor = connection.cursor()
@@ -87,35 +87,31 @@ async def get_ticket_by_id(id: int):
         cursor.close()
         connection.close()
     if data:
-        Ticket(
-            id_ticket=i[0],
-            numero=i[1],
-            lote=i[2],
+        return Ticket(
+            id_ticket=data[0],
+            numero=data[1],
+            lote=data[2],
             evento=(
-                Evento(id_evento=i[3], 
-                titulo=i[4], 
-                data_inicio=i[5], 
-                data_fim=i[6], 
-                horario_inicio=i[7], 
-                horario_fim=i[8],
-                endereco=i[9],
+                Evento(id_evento=data[3], 
+                titulo=data[4], 
+                data_inicio=data[5], 
+                data_fim=data[6], 
+                horario_inicio=data[7], 
+                horario_fim=data[8],
+                endereco=data[9],
                 )
-                if i[3] is not None
-                else None
             ),
             cliente=(
                 Cliente(
-                    id_cliente=i[10],
-                    cpf=i[11],
-                    pnome=i[12],
-                    unome=i[13],
-                    data_nasc=i[14],
-                    genero=i[15],
-                    contato=i[16],
-                    endereco=i[17],
+                    id_cliente=data[10],
+                    cpf=data[11],
+                    pnome=data[12],
+                    unome=data[13],
+                    data_nasc=data[14],
+                    genero=data[15],
+                    contato=data[16],
+                    endereco=data[17],
                 )
-                if i[10] is not None
-                else None
             ),
         )
     raise HTTPException(status_code=404, detail=f"NOK: Ticket {id} não encontrado.")
