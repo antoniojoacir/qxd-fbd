@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
 from models.endereco import Endereco
-from models.evento import Evento, EventoCreate
+from models.evento import Evento, EventoCreate, EventoUpdate
 from models.contato import Contato
 from env.db import db_connect
 
@@ -166,4 +166,65 @@ async def create_evento(evento: EventoCreate):
     finally:
         cursor.close()
         connection.close()
-    return "OK"
+    return {"OK": "Evento criado com sucesso."}
+
+
+@router.patch("/update")
+async def update_evento(id: int, evento: EventoUpdate):
+    data = {key: value for key, value in evento if value is not None}
+    if not data:
+        raise HTTPException(
+            status_code=400,
+            detail={"NOK": "Nenhum campo para atualizar foi fornecido."},
+        )
+    connection = db_connect()
+    cursor = connection.cursor()
+    try:
+        if "id_contato" in data:
+            cursor.execute(
+                """
+                SELECT id_contato 
+                FROM contatos 
+                WHERE id_contato = %s
+                """,
+                (data["id_contato"],),
+            )
+            if not cursor.fetchone():
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Contato com ID {data['id_contato']} não encontrado.",
+                )
+
+        if "id_endereco" in data:
+            cursor.execute(
+                """
+                SELECT id_endereco 
+                FROM enderecos 
+                WHERE id_endereco = %s
+                """,
+                (data["id_endereco"],),
+            )
+            if not cursor.fetchone():
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Endereço com ID {data['id_endereco']} não encontrado.",
+                )
+        set_ = ", ".join([f"{key}=%s" for key in data.keys()])
+        values = list(data.values())
+        values.append(id)
+        cursor.execute(
+            f"""
+            UPDATE eventos
+            SET {set_}
+            WHERE id_evento=%s
+            """,
+            tuple(values),
+        )
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=400, detail=f"NOK: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+    return {"OK": f"Evento {id} atualizado com sucesso."}

@@ -26,3 +26,13 @@ class EventoCreate(BaseModel):
     id_contato: Optional[int] = None
     id_endereco: Optional[int] = None
 
+
+class EventoUpdate(BaseModel):
+    titulo: Optional[str] = None
+    data_inicio: Optional[date] = None
+    data_fim: Optional[date] = None
+    horario_inicio: Optional[time] = None
+    horario_fim: Optional[time] = None
+    id_contato: Optional[int] = None
+    id_endereco: Optional[int] = None
+
