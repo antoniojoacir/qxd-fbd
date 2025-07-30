@@ -20,8 +20,7 @@ async def list_atracoes():
                 a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, 
                 c.id_contato, c.tipo_contato, c.info_contato 
             FROM atracoes AS a 
-            JOIN contatos AS c 
-            ON c.id_contato = a.id_contato
+            LEFT JOIN contatos AS c ON c.id_contato = a.id_contato
             """
         )
         data = cursor.fetchall()
@@ -36,7 +35,11 @@ async def list_atracoes():
             cnpj=i[1],
             nome_atracao=i[2],
             tipo_atracao=i[3],
-            contato=Contato(id_contato=i[4], tipo_contato=i[5], info_contato=i[6]),
+            contato=(
+                Contato(id_contato=i[4], tipo_contato=i[5], info_contato=i[6])
+                if i[4] is not None
+                else None
+            ),
         )
         for i in data
     ]
@@ -53,8 +56,7 @@ async def get_atracao_by_id(id: int):
                 a.id_atracao, a.cnpj, a.nome_atracao, a.tipo_atracao, 
                 c.id_contato, c.tipo_contato, c.info_contato 
             FROM atracoes AS a 
-            JOIN contatos AS c 
-            ON c.id_contato = a.id_contato 
+            LEFT JOIN contatos AS c ON c.id_contato = a.id_contato 
             WHERE id_atracao = %s
             """,
             (id,),
@@ -71,10 +73,14 @@ async def get_atracao_by_id(id: int):
             cnpj=data[1],
             nome_atracao=data[2],
             tipo_atracao=data[3],
-            contato=Contato(
-                id_contato=data[4],
-                tipo_contato=data[5],
-                info_contato=data[6],
+            contato=(
+                Contato(
+                    id_contato=data[4],
+                    tipo_contato=data[5],
+                    info_contato=data[6],
+                )
+                if data[4] is not None
+                else None
             ),
         )
     raise HTTPException(status_code=404, detail=f"NOK: Atração {id} não encontrada")
@@ -82,34 +88,33 @@ async def get_atracao_by_id(id: int):
 
 @router.post("/create")
 async def create_atracao(atracao: AtracaoCreate):
+    data = {key: value for key, value in atracao if value is not None}
     connection = db_connect()
     cursor = connection.cursor()
     try:
-        cursor.execute(
-            """
-            SELECT id_contato 
-            FROM contatos 
-            WHERE id_contato=%s
-            """,
-            (atracao.id_contato,),
-        )
-        if not cursor.fetchone():
-            raise HTTPException(
-                status_code=404,
-                detail={"NOK": f"Contato {atracao.id_contato} não encontrado"},
+        if "id_contato" in data:
+            cursor.execute(
+                """
+                SELECT id_contato 
+                FROM contatos 
+                WHERE id_contato=%s
+                """,
+                (atracao.id_contato,),
             )
+            if not cursor.fetchone():
+                raise HTTPException(
+                    status_code=404,
+                    detail={"NOK": f"Contato {atracao.id_contato} não encontrado"},
+                )
+        columns = ", ".join(data.keys())
+        placeholders = ", ".join(["%s"] * len(data))
+        values = tuple(data.values())
         cursor.execute(
-            """
-            INSERT INTO atracoes (id_atracao, cnpj, nome_atracao, tipo_atracao, id_contato) 
-            VALUES (%s, %s, %s, %s, %s)
+            f"""
+            INSERT INTO atracoes ({columns}) 
+            VALUES ({placeholders})
             """,
-            (
-                atracao.id_atracao,
-                atracao.cnpj,
-                atracao.nome_atracao,
-                atracao.tipo_atracao,
-                atracao.id_contato,
-            ),
+            values,
         )
         connection.commit()
     except Exception as e:
@@ -195,6 +200,14 @@ async def delete_atracao(id: int):
                 status_code=404,
                 detail=f"Atração {id} inexistente.",
             )
+        cursor.execute(
+            """
+            UPDATE se_apresenta
+            SET id_atracao = NULL
+            WHERE id_atracao=%s
+            """,
+            (id,),
+        )
         cursor.execute(
             """
             DELETE FROM atracoes 
