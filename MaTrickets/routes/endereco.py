@@ -141,12 +141,19 @@ async def delete_endereco(id_endereco: int):
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "UPDATE clientes SET id_endereco = NULL WHERE id_endereco = %s",
+            """
+            UPDATE clientes 
+            SET id_endereco = NULL 
+            WHERE id_endereco = %s
+            """,
             (id_endereco,),
         )
 
         cursor.execute(
-            "UPDATE eventos SET id_endereco = NULL WHERE id_endereco = %s",
+            """UPDATE eventos 
+            SET id_endereco = NULL 
+            WHERE id_endereco = %s
+            """,
             (id_endereco,),
         )
         cursor.execute(

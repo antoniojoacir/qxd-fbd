@@ -250,6 +250,22 @@ async def delete_evento(id: int):
             )
         cursor.execute(
             """
+            UPDATE tickets
+            SET id_evento = NULL
+            WHERE id_evento=%s
+            """,
+            (id,),
+        )
+        cursor.execute(
+            """
+            UPDATE se_apresenta 
+            SET id_evento = NULL
+            WHERE id_evento=%s
+            """,
+            (id,),
+        )
+        cursor.execute(
+            """
             DELETE FROM eventos 
             WHERE id_evento = %s
             """,
