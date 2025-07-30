@@ -150,7 +150,8 @@ async def delete_endereco(id_endereco: int):
         )
 
         cursor.execute(
-            """UPDATE eventos 
+            """
+            UPDATE eventos 
             SET id_endereco = NULL 
             WHERE id_endereco = %s
             """,

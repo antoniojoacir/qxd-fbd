@@ -8,7 +8,7 @@ class Atracao(BaseModel):
     cnpj: str
     nome_atracao: str
     tipo_atracao: str
-    contato: Contato
+    contato: Optional[Contato] = None
 
 
 class AtracaoCreate(BaseModel):
@@ -16,7 +16,7 @@ class AtracaoCreate(BaseModel):
     cnpj: str
     nome_atracao: str
     tipo_atracao: str
-    id_contato: int
+    id_contato: Optional[int] = None
 
 
 class AtracaoUpdate(BaseModel):
