@@ -228,3 +228,38 @@ async def update_evento(id: int, evento: EventoUpdate):
         cursor.close()
         connection.close()
     return {"OK": f"Evento {id} atualizado com sucesso."}
+
+
+@router.delete("/delete/{id}")
+async def delete_evento(id: int):
+    connection = db_connect()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT id_evento
+            FROM eventos 
+            WHERE id_evento=%s
+            """,
+            (id,),
+        )
+        if not cursor.fetchone():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Evento {id} inexistente.",
+            )
+        cursor.execute(
+            """
+            DELETE FROM eventos 
+            WHERE id_evento = %s
+            """,
+            (id,),
+        )
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=400, detail=f"NOK {e}")
+    finally:
+        cursor.close()
+        connection.close()
+    return {"OK": f"Evento {id} removido"}
