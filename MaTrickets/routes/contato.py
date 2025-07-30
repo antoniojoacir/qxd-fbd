@@ -133,3 +133,38 @@ async def update_contato(id: int, contato: ContatoUpdate):
         cursor.close()
         connection.close()
     return {"OK": f"Contato {id} atualizado com sucesso."}
+
+
+@router.delete("/delete/{id}")
+async def delete_contato():
+    connection = db_connect()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT id_contato
+            FROM atracoes
+            WHERE id_contato=%s
+            """,
+            (id,),
+        )
+        if not cursor.fetchone():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Contato {id} inexistente.",
+            )
+        cursor.execute(
+            """
+            DELETE FROM contatos 
+            WHERE id_contatos = %s
+            """,
+            (id,),
+        )
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=400, detail=f"NOK {e}")
+    finally:
+        cursor.close()
+        connection.close()
+    return {"OK": f"Contato {id} removido"}
