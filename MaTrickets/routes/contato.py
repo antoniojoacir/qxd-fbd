@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
-from models.contato import Contato
+from models.contato import Contato, ContatoUpdate
 from env.db import db_connect
 
 router = APIRouter()
@@ -28,8 +28,8 @@ async def get_contato():
     ]
 
 
-@router.get("/list/{id}", response_model=Contato)
-async def get_contato_by_id(index: int):
+@router.get("/get/{id}", response_model=Contato)
+async def get_contato_by_id(id: int):
     connection = db_connect()
     cursor = connection.cursor()
     try:
@@ -39,7 +39,7 @@ async def get_contato_by_id(index: int):
             FROM contatos
             WHERE id_contato=%s
             """,
-            (index,),
+            (id,),
         )
         data = cursor.fetchone()
     except Exception as e:
@@ -53,7 +53,7 @@ async def get_contato_by_id(index: int):
             tipo_contato=data[1],
             info_contato=data[2],
         )
-    raise HTTPException(status_code=404, detail=f"NOK: Contato {index} não encontrada")
+    raise HTTPException(status_code=404, detail=f"NOK: Contato {id} não encontrada")
 
 
 @router.post("/create")
@@ -72,7 +72,7 @@ async def create_contato(contato: Contato):
         if cursor.fetchone():
             raise HTTPException(
                 status_code=404,
-                detail={"NOK": f"Contato {contato.id_contato} já existe."},
+                detail=f"Contato {contato.id_contato} já existe.",
             )
         cursor.execute(
             """
@@ -88,3 +88,48 @@ async def create_contato(contato: Contato):
         cursor.close()
         connection.close()
     return {"OK": "Contato criado com sucesso."}
+
+
+@router.patch("/update/{id}")
+async def update_contato(id: int, contato: ContatoUpdate):
+    data = {key: value for key, value in contato if value is not None}
+    if not data:
+        raise HTTPException(
+            status_code=400,
+            detail="Nenhum campo para atualizar foi fornecido.",
+        )
+    connection = db_connect()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            """
+                SELECT id_contato
+                FROM contatos
+                WHERE id_contato=%s
+                """,
+            (id,),
+        )
+        if not cursor.fetchone():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Contato {id} não encontrado",
+            )
+        set_ = ", ".join([f"{key}=%s" for key in data.keys()])
+        values = list(data.values())
+        values.append(id)
+        cursor.execute(
+            f"""
+            UPDATE contatos
+            SET {set_}
+            WHERE id_contato=%s
+            """,
+            tuple(values),
+        )
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(status_code=400, detail=f"NOK {e}")
+    finally:
+        cursor.close()
+        connection.close()
+    return {"OK": f"Contato {id} atualizado com sucesso."}

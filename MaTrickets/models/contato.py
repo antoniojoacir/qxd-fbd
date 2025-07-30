@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class Contato(BaseModel):
@@ -8,5 +9,5 @@ class Contato(BaseModel):
 
 
 class ContatoUpdate(BaseModel):
-    tipo_contato: str
-    info_contato: str
+    tipo_contato: Optional[str] = None
+    info_contato: Optional[str] = None
