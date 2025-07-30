@@ -13,7 +13,7 @@ class Cliente(BaseModel):
     data_nasc: date
     genero: str
     contato: Contato
-    endereco: Endereco
+    endereco: Optional[Endereco] = None
 
 
 class ClienteCreate(BaseModel):
@@ -24,7 +24,7 @@ class ClienteCreate(BaseModel):
     data_nasc: date
     genero: str
     id_contato: int
-    id_endereco: int
+    id_endereco: Optional[int] = None
 
 
 class ClienteUpdate(BaseModel):

@@ -25,7 +25,7 @@ async def list_clientes():
                 e.id_endereco, e.cep, e.cidade, e.rua, e.uf, e.numero
             FROM clientes AS c
             JOIN contatos AS ct ON c.id_contato = ct.id_contato
-            JOIN enderecos AS e ON c.id_endereco = e.id_endereco
+            LEFT JOIN enderecos AS e ON c.id_endereco = e.id_endereco
             """
         )
         data = cursor.fetchall()
@@ -47,13 +47,17 @@ async def list_clientes():
                 tipo_contato=i[7],
                 info_contato=i[8],
             ),
-            endereco=Endereco(
-                id_endereco=i[9],
-                cep=i[10],
-                cidade=i[11],
-                rua=i[12],
-                uf=i[13],
-                numero=i[14],
+            endereco=(
+                Endereco(
+                    id_endereco=i[9],
+                    cep=i[10],
+                    cidade=i[11],
+                    rua=i[12],
+                    uf=i[13],
+                    numero=i[14],
+                )
+                if i[9] is not None
+                else None
             ),
         )
         for i in data
@@ -73,7 +77,7 @@ async def get_cliente_by_id(id: int):
                 e.id_endereco, e.cep, e.cidade, e.rua, e.uf, e.numero
             FROM clientes AS c
             JOIN contatos AS ct ON c.id_contato = ct.id_contato
-            JOIN enderecos AS e ON c.id_endereco = e.id_endereco
+            LEFT JOIN enderecos AS e ON c.id_endereco = e.id_endereco
             WHERE c.id_cliente=%s
             """,
             (id,),
@@ -97,13 +101,17 @@ async def get_cliente_by_id(id: int):
                 tipo_contato=data[7],
                 info_contato=data[8],
             ),
-            endereco=Endereco(
-                id_endereco=data[9],
-                cep=data[10],
-                cidade=data[11],
-                rua=data[12],
-                uf=data[13],
-                numero=data[14],
+            endereco=(
+                Endereco(
+                    id_endereco=data[9],
+                    cep=data[10],
+                    cidade=data[11],
+                    rua=data[12],
+                    uf=data[13],
+                    numero=data[14],
+                )
+                if data[9] is not None
+                else None
             ),
         )
     raise HTTPException(status_code=404, detail=f"NOK: Cliente {id} não encontrado")
@@ -111,6 +119,7 @@ async def get_cliente_by_id(id: int):
 
 @router.post("/create")
 async def create_cliente(cliente: ClienteCreate):
+    data = {key: value for key, value in cliente if value is not None}
     connection = db_connect()
     cursor = connection.cursor()
     try:
@@ -120,42 +129,36 @@ async def create_cliente(cliente: ClienteCreate):
             FROM contatos 
             WHERE id_contato=%s
             """,
-            (cliente.id_contato,),
+            (data["id_contato"],),
         )
         if not cursor.fetchone():
             raise HTTPException(
                 status_code=404,
                 detail={f"Contato {cliente.id_contato} não encontrado"},
             )
-        cursor.execute(
-            """
-            SELECT id_endereco 
-            FROM enderecos 
-            WHERE id_endereco=%s
-            """,
-            (cliente.id_endereco,),
-        )
-        if not cursor.fetchone():
-            raise HTTPException(
-                status_code=404,
-                detail={f"Endereco {cliente.id_endereco} não encontrado"},
+        if "id_endereco" in data:
+            cursor.execute(
+                """
+                SELECT id_endereco 
+                FROM enderecos 
+                WHERE id_endereco=%s
+                """,
+                (data["id_endereco"],),
             )
-
+            if not cursor.fetchone():
+                raise HTTPException(
+                    status_code=404,
+                    detail={f"Endereco {cliente.id_endereco} não encontrado"},
+                )
+        columns = ", ".join(data.keys())
+        placeholders = ", ".join(["%s"] * len(data))
+        values = tuple(data.values())
         cursor.execute(
-            """
-            INSERT INTO clientes (id_cliente, cpf, pnome, unome, data_nasc, genero, id_contato, id_endereco) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            f"""
+            INSERT INTO clientes ({columns}) 
+            VALUES ({placeholders})
             """,
-            (
-                cliente.id_cliente,
-                cliente.cpf,
-                cliente.pnome,
-                cliente.unome,
-                cliente.data_nasc,
-                cliente.genero,
-                cliente.id_contato,
-                cliente.id_endereco,
-            ),
+            values,
         )
         connection.commit()
     except Exception as e:
@@ -164,7 +167,7 @@ async def create_cliente(cliente: ClienteCreate):
     finally:
         cursor.close()
         connection.close()
-    return {"OK": f"Cliente {cliente.id_cliente}:{cliente.pnome} criado com sucesso."}
+    return {"OK": f"Cliente {data["id_cliente"]}:{data["pnome"]} criado com sucesso."}
 
 
 @router.patch("/update/{id}")
@@ -173,7 +176,7 @@ async def update_cliente(id: int, cliente: ClienteUpdate):
     if not data:
         raise HTTPException(
             status_code=400,
-            detail={"NOK":"Nenhum campo para atualizar foi fornecido."},
+            detail={"NOK": "Nenhum campo para atualizar foi fornecido."},
         )
     connection = db_connect()
     cursor = connection.cursor()
@@ -238,10 +241,18 @@ async def delete_cliente(id: int):
             FROM clientes
             WHERE id_cliente=%s
             """,
-            (id,)
+            (id,),
         )
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail=f"Cliente {id} não existe")
+        cursor.execute(
+            """
+            UPDATE tickets
+            SET id_cliente = NULL
+            WHERE id_cliente=%s
+            """,
+            (id,),
+        )
         cursor.execute(
             """
             DELETE FROM clientes
