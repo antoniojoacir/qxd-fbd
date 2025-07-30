@@ -31,18 +31,23 @@ async def list_tickets():
         cursor.close()
         connection.close()
     return [
+        # !NOTE: o parametro é id_cliente, ou renomeia aqui ou no model.ticket ps: todos os outros estão 
+        # usando o nome da class no list/get_by_id
+        # alem disso, como é um modelo, ele precisa ser contruido parametro por parametro
+        # e tambem, o model precisa ser atualizado para permitir valores nulos nos podem receber ps: importa o Optional
         Ticket(
             id_ticket=i[0],
             numero=i[1],
             lote=i[2],
             evento=(
-                Evento(id_evento=i[3], 
-                titulo=i[4], 
-                data_inicio=i[5], 
-                data_fim=i[6], 
-                horario_inicio=i[7], 
-                horario_fim=i[8],
-                endereco=i[9],
+                Evento(
+                    id_evento=i[3],
+                    titulo=i[4],
+                    data_inicio=i[5],
+                    data_fim=i[6],
+                    horario_inicio=i[7],
+                    horario_fim=i[8],
+                    endereco=i[9],
                 )
             ),
             cliente=(
@@ -87,18 +92,22 @@ async def get_ticket_by_id(id: int):
         cursor.close()
         connection.close()
     if data:
+        #
+        # !NOTE: mesma situação aqui.
+        #
         return Ticket(
             id_ticket=data[0],
             numero=data[1],
             lote=data[2],
             evento=(
-                Evento(id_evento=data[3], 
-                titulo=data[4], 
-                data_inicio=data[5], 
-                data_fim=data[6], 
-                horario_inicio=data[7], 
-                horario_fim=data[8],
-                endereco=data[9],
+                Evento(
+                    id_evento=data[3],
+                    titulo=data[4],
+                    data_inicio=data[5],
+                    data_fim=data[6],
+                    horario_inicio=data[7],
+                    horario_fim=data[8],
+                    endereco=data[9],
                 )
             ),
             cliente=(
@@ -252,7 +261,7 @@ async def delete_ticket(id: int):
                 status_code=404,
                 detail=f"Ticket {id} inexistente.",
             )
-        
+
         connection.commit()
     except Exception as e:
         connection.rollback()
