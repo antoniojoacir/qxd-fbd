@@ -1,6 +1,8 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
-from models.evento import Evento
+from models.endereco import Endereco
+from models.evento import Evento, EventoCreate
+from models.contato import Contato
 from env.db import db_connect
 
 router = APIRouter()
@@ -10,36 +12,154 @@ router = APIRouter()
 async def list_eventos():
     connection = db_connect()
     cursor = connection.cursor()
-    cursor.execute("SELECT id_evento, titulo, data_inicio, data_fim, horario_inicio, horario_fim, id_contato, id_endereco FROM eventos")
-    data = cursor.fetchall()
-    cursor.close()
-    connection.close()
+    try:
+        cursor.execute(
+            """
+        SELECT 
+            e.id_evento, e.titulo, e.data_inicio, e.data_fim, e.horario_inicio, e.horario_fim, 
+            c.id_contato, c.tipo_contato, c.info_contato,
+            ed.id_endereco, ed.cep, ed.cidade, ed.rua, ed.uf, ed.numero 
+        FROM eventos AS e
+        LEFT JOIN contatos AS c ON e.id_contato = c.id_contato
+        LEFT JOIN enderecos AS ed ON e.id_endereco = ed.id_endereco
+        """
+        )
+        data = cursor.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail={"NOK": {e}})
+    finally:
+        cursor.close()
+        connection.close()
     return [
         Evento(
-            id_evento=i[0], titulo=i[1], data_inicio=i[2], data_fim=i[3], horario_inicio=i[4], horario_fim=i[5], id_contato=i[6], id_endereco=i[7]
+            id_evento=i[0],
+            titulo=i[1],
+            data_inicio=i[2],
+            data_fim=i[3],
+            horario_inicio=i[4],
+            horario_fim=i[5],
+            contato=(
+                Contato(id_contato=i[6], tipo_contato=i[7], info_contato=i[8])
+                if i[6] is not None
+                else None
+            ),
+            endereco=(
+                Endereco(
+                    id_endereco=i[9],
+                    cep=i[10],
+                    cidade=i[11],
+                    rua=i[12],
+                    uf=i[13],
+                    numero=i[14],
+                )
+                if i[9] is not None
+                else None
+            ),
         )
         for i in data
     ]
 
 
-@router.post("/create")
-async def create_evento(evento: Evento):
+@router.get("/get/{id}", response_model=Evento)
+async def get_evento_by_id(id: int):
     connection = db_connect()
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "INSERT INTO eventos (id_evento, titulo, data_inicio, data_fim, horario_inicio, horario_fim, id_contato, id_endereco) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            (
-                evento.id_evento,
-                evento.titulo,
-                evento.data_inicio,
-                evento.data_fim,
-                evento.horario_inicio,
-                evento.horario_fim,
-                evento.id_contato,
-                evento.id_endereco,
+            """
+            SELECT 
+                e.id_evento, e.titulo, e.data_inicio, e.data_fim, e.horario_inicio, e.horario_fim, 
+                c.id_contato, c.tipo_contato, c.info_contato,
+                ed.id_endereco, ed.cep, ed.cidade, ed.rua, ed.uf, ed.numero 
+            FROM eventos AS e
+            LEFT JOIN contatos AS c ON e.id_contato = c.id_contato
+            LEFT JOIN enderecos AS ed ON e.id_endereco = ed.id_endereco
+            WHERE id_evento=%s
+            """,
+            (id,),
+        )
+        data = cursor.fetchone()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail={"NOK": {e}})
+    finally:
+        cursor.close()
+        connection.close()
+    if data:
+        return Evento(
+            id_evento=data[0],
+            titulo=data[1],
+            data_inicio=data[2],
+            data_fim=data[3],
+            horario_inicio=data[4],
+            horario_fim=data[5],
+            contato=(
+                Contato(id_contato=data[6], tipo_contato=data[7], info_contato=data[8])
+                if data[6] is not None
+                else None
+            ),
+            endereco=(
+                Endereco(
+                    id_endereco=data[9],
+                    cep=data[10],
+                    cidade=data[11],
+                    rua=data[12],
+                    uf=data[13],
+                    numero=data[14],
+                )
+                if data[9] is not None
+                else None
             ),
         )
+    raise HTTPException(status_code=404, detail=f"NOK: Evento {id} não encontrado.")
+
+
+@router.post("/create")
+async def create_evento(evento: EventoCreate):
+    data = {key: value for key, value in evento if value is not None}
+    connection = db_connect()
+    cursor = connection.cursor()
+    try:
+        if "id_contato" in data:
+            cursor.execute(
+                """
+                SELECT id_contato 
+                FROM contatos 
+                WHERE id_contato = %s
+                """,
+                (data["id_contato"],),
+            )
+            if not cursor.fetchone():
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Contato com ID {data['id_contato']} não encontrado.",
+                )
+
+        if "id_endereco" in data:
+            cursor.execute(
+                """
+                SELECT id_endereco 
+                FROM enderecos 
+                WHERE id_endereco = %s
+                """,
+                (data["id_endereco"],),
+            )
+            if not cursor.fetchone():
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Endereço com ID {data['id_endereco']} não encontrado.",
+                )
+
+        columns = ", ".join(data.keys())
+        placeholders = ", ".join(["%s"] * len(data))
+        values = tuple(data.values())
+        cursor.execute(
+            f"""
+            INSERT INTO eventos ({columns}) 
+            VALUES ({placeholders})
+            """,
+            values,
+        )
+        connection.commit()
     except Exception as e:
         connection.rollback()
         raise HTTPException(status_code=400, detail=f"NOK: {e}")
