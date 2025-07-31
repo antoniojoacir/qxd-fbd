@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException
 from models.atracao import AtracaoNoDetails
 from models.evento import EventoNoDetails
-from models.se_apresenta import Se_Apresenta
+from models.se_apresenta import Se_Apresenta, SeApresentaCreate
 from env.db import db_connect
 
 router = APIRouter()
@@ -106,24 +106,50 @@ async def get_se_apresenta_by_id(id_atracao: int, id_evento: int):
 
 
 @router.post("/create")
-async def create_se_apresenta(se_apresenta: Se_Apresenta):
+async def create_se_apresenta(se_apresenta_data: SeApresentaCreate):
     connection = db_connect()
     cursor = connection.cursor()
     try:
         cursor.execute(
-            "INSERT INTO se_apresenta (id_atracao, id_evento) VALUES (%s, %s)",
-            (
-                se_apresenta.id_atracao,
-                se_apresenta.id_evento,
-            ),
+            "SELECT 1 FROM atracoes WHERE id_atracao = %s",
+            (se_apresenta_data.id_atracao,),
         )
+        if not cursor.fetchone():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Atração com ID {se_apresenta_data.id_atracao} não encontrada.",
+            )
+
+        cursor.execute(
+            "SELECT 1 FROM eventos WHERE id_evento = %s", (se_apresenta_data.id_evento,)
+        )
+        if not cursor.fetchone():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Evento com ID {se_apresenta_data.id_evento} não encontrado.",
+            )
+
+        cursor.execute(
+            "INSERT INTO se_apresenta (id_atracao, id_evento) VALUES (%s, %s)",
+            (se_apresenta_data.id_atracao, se_apresenta_data.id_evento),
+        )
+        connection.commit()
+
+        return await get_se_apresenta_by_id(
+            se_apresenta_data.id_atracao, se_apresenta_data.id_evento
+        )
+
+    except HTTPException as http_exc:
+        connection.rollback()
+        raise http_exc
     except Exception as e:
         connection.rollback()
-        raise HTTPException(status_code=400, detail=f"NOK: {e}")
+        raise HTTPException(
+            status_code=400, detail={"status": "NOK", "message": str(e)}
+        )
     finally:
         cursor.close()
         connection.close()
-    return "OK"
 
 
 @router.delete("/delete/{id_atracao}/{id_evento}")

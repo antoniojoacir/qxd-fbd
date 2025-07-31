@@ -7,3 +7,8 @@ from models.evento import EventoNoDetails
 class Se_Apresenta(BaseModel):
     atracao: Optional[AtracaoNoDetails] = None
     evento: Optional[EventoNoDetails] = None
+
+
+class SeApresentaCreate(BaseModel):
+    id_atracao: int
+    id_evento: int
