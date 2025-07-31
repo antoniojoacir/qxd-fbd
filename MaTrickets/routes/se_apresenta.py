@@ -124,3 +124,29 @@ async def create_se_apresenta(se_apresenta: Se_Apresenta):
         cursor.close()
         connection.close()
     return "OK"
+
+
+@router.delete("/delete/{id_atracao}/{id_evento}")
+async def delete_se_apresenta(id_atracao: int, id_evento: int):
+    connection = db_connect()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            "DELETE FROM se_apresenta WHERE id_atracao = %s AND id_evento = %s",
+            (id_atracao, id_evento),
+        )
+        if cursor.rowcount == 0:
+            raise HTTPException(
+                status_code=404, detail="Associação a ser deletada não foi encontrada."
+            )
+        connection.commit()
+    except Exception as e:
+        connection.rollback()
+        raise HTTPException(
+            status_code=400, detail={"status": "NOK", "message": str(e)}
+        )
+    finally:
+        cursor.close()
+        connection.close()
+
+    return {"message": "Associação removida com sucesso"}
