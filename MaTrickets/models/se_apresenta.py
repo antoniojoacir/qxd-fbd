@@ -1,8 +1,9 @@
+from typing import Optional
 from pydantic import BaseModel
-from models.atracao import Atracao
-from models.evento import Evento
+from models.atracao import AtracaoNoDetails
+from models.evento import EventoNoDetails
 
 
 class Se_Apresenta(BaseModel):
-    id_atracao: Atracao
-    id_evento: Evento
+    atracao: Optional[AtracaoNoDetails] = None
+    evento: Optional[EventoNoDetails] = None

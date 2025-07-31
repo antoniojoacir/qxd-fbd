@@ -24,3 +24,11 @@ class AtracaoUpdate(BaseModel):
     nome_atracao: Optional[str] = None
     tipo_atracao: Optional[str] = None
     id_contato: Optional[int] = None
+
+class AtracaoNoDetails(BaseModel):
+    id_atracao: int
+    cnpj: str
+    nome_atracao: str
+    tipo_atracao: str
+    id_contato: Optional[int] = None
+
