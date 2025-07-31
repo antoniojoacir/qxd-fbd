@@ -1,8 +1,8 @@
 from typing import List
 from fastapi import APIRouter, HTTPException
-from models.evento import Evento
+from models.evento import Evento, EventoNoDetails
 from models.ticket import Ticket, TicketCreate, TicketUpdate
-from models.cliente import Cliente
+from models.cliente import Cliente, ClienteNoDetails
 from env.db import db_connect
 
 router = APIRouter()
@@ -15,14 +15,14 @@ async def list_tickets():
     try:
         cursor.execute(
             """
-        SELECT 
-            t.id_ticket, t.numero, t.lote,
-            c.id_cliente, c.cpf, c.pnome, c.unome, c.data_nasc, c.genero, c.contato, c.endereco,
-            e.id_evento, e.titulo, e.data_inicio, e.data_fim, e.horario_inicio, e.horario_fim, e.endereco
-        FROM tickets AS t
-        LEFT JOIN clientes AS c ON t.id_cliente = c.id_cliente
-        LEFT JOIN eventos AS e ON t.id_evento = e.id_evento
-        """
+            SELECT 
+                t.id_ticket, t.numero, t.lote,
+                c.id_cliente, c.cpf, c.pnome, c.unome, c.data_nasc, c.genero, c.id_contato, c.id_endereco,
+                e.id_evento, e.titulo, e.data_inicio, e.data_fim, e.horario_inicio, e.horario_fim, e.id_contato, e.id_endereco
+            FROM tickets AS t
+            LEFT JOIN clientes AS c ON t.id_cliente = c.id_cliente
+            LEFT JOIN eventos AS e ON t.id_evento = e.id_evento
+            """
         )
         data = cursor.fetchall()
     except Exception as e:
@@ -31,36 +31,41 @@ async def list_tickets():
         cursor.close()
         connection.close()
     return [
-        # !NOTE: o parametro é id_cliente, ou renomeia aqui ou no model.ticket ps: todos os outros estão 
-        # usando o nome da class no list/get_by_id
-        # alem disso, como é um modelo, ele precisa ser contruido parametro por parametro
-        # e tambem, o model precisa ser atualizado para permitir valores nulos nos podem receber ps: importa o Optional
         Ticket(
             id_ticket=i[0],
             numero=i[1],
             lote=i[2],
-            evento=(
-                Evento(
-                    id_evento=i[3],
-                    titulo=i[4],
-                    data_inicio=i[5],
-                    data_fim=i[6],
-                    horario_inicio=i[7],
-                    horario_fim=i[8],
-                    endereco=i[9],
-                )
-            ),
             cliente=(
-                Cliente(
-                    id_cliente=i[10],
-                    cpf=i[11],
-                    pnome=i[12],
-                    unome=i[13],
-                    data_nasc=i[14],
-                    genero=i[15],
-                    contato=i[16],
-                    endereco=i[17],
+                (
+                    ClienteNoDetails(
+                        id_cliente=i[3],
+                        cpf=i[4],
+                        pnome=i[5],
+                        unome=i[6],
+                        data_nasc=i[7],
+                        genero=i[8],
+                        id_contato=i[9],
+                        id_endereco=i[10] if i[10] is not None else None,
+                    )
                 )
+                if i[3] is not None
+                else None
+            ),
+            evento=(
+                (
+                    EventoNoDetails(
+                        id_evento=i[11],
+                        titulo=i[12],
+                        data_inicio=i[13],
+                        data_fim=i[14],
+                        horario_inicio=i[15],
+                        horario_fim=i[16],
+                        id_contato=i[17] if i[17] is not None else None,
+                        id_endereco=i[18] if i[18] is not None else None,
+                    )
+                )
+                if i[11] is not None
+                else None
             ),
         )
         for i in data
@@ -76,8 +81,8 @@ async def get_ticket_by_id(id: int):
             """
             SELECT 
                 t.id_ticket, t.numero, t.lote,
-                c.id_cliente, c.cpf, c.pnome, c.unome, c.data_nasc, c.genero, c.contato, c.endereco,
-                e.id_evento, e.titulo, e.data_inicio, e.data_fim, e.horario_inicio, e.horario_fim, e.endereco
+                c.id_cliente, c.cpf, c.pnome, c.unome, c.data_nasc, c.genero, c.id_contato, c.id_endereco,
+                e.id_evento, e.titulo, e.data_inicio, e.data_fim, e.horario_inicio, e.horario_fim, e.id_contato, e.id_endereco
             FROM tickets AS t
             LEFT JOIN clientes AS c ON t.id_cliente = c.id_cliente
             LEFT JOIN eventos AS e ON t.id_evento = e.id_evento
@@ -92,35 +97,41 @@ async def get_ticket_by_id(id: int):
         cursor.close()
         connection.close()
     if data:
-        #
-        # !NOTE: mesma situação aqui.
-        #
         return Ticket(
             id_ticket=data[0],
             numero=data[1],
             lote=data[2],
-            evento=(
-                Evento(
-                    id_evento=data[3],
-                    titulo=data[4],
-                    data_inicio=data[5],
-                    data_fim=data[6],
-                    horario_inicio=data[7],
-                    horario_fim=data[8],
-                    endereco=data[9],
-                )
-            ),
             cliente=(
-                Cliente(
-                    id_cliente=data[10],
-                    cpf=data[11],
-                    pnome=data[12],
-                    unome=data[13],
-                    data_nasc=data[14],
-                    genero=data[15],
-                    contato=data[16],
-                    endereco=data[17],
+                (
+                    ClienteNoDetails(
+                        id_cliente=data[3],
+                        cpf=data[4],
+                        pnome=data[5],
+                        unome=data[6],
+                        data_nasc=data[7],
+                        genero=data[8],
+                        id_contato=data[9],
+                        id_endereco=data[10] if data[10] is not None else None,
+                    )
                 )
+                if data[3] is not None
+                else None
+            ),
+            evento=(
+                (
+                    EventoNoDetails(
+                        id_evento=data[11],
+                        titulo=data[12],
+                        data_inicio=data[13],
+                        data_fim=data[14],
+                        horario_inicio=data[15],
+                        horario_fim=data[16],
+                        id_contato=data[17] if data[17] is not None else None,
+                        id_endereco=data[18] if data[18] is not None else None,
+                    )
+                )
+                if data[11] is not None
+                else None
             ),
         )
     raise HTTPException(status_code=404, detail=f"NOK: Ticket {id} não encontrado.")
@@ -167,7 +178,7 @@ async def create_ticket(ticket: TicketCreate):
         values = tuple(data.values())
         cursor.execute(
             f"""
-            INSERT INTO eventos ({columns}) 
+            INSERT INTO tickets ({columns}) 
             VALUES ({placeholders})
             """,
             values,
@@ -182,7 +193,7 @@ async def create_ticket(ticket: TicketCreate):
     return {"OK": "Ticket criado com sucesso."}
 
 
-@router.patch("/update")
+@router.patch("/update/{id}")
 async def update_ticket(id: int, evento: TicketUpdate):
     data = {key: value for key, value in evento if value is not None}
     if not data:
@@ -261,7 +272,13 @@ async def delete_ticket(id: int):
                 status_code=404,
                 detail=f"Ticket {id} inexistente.",
             )
-
+        cursor.execute(
+            """
+            DELETE FROM tickets
+            WHERE id_ticket=%s
+            """,
+            (id,)
+        )
         connection.commit()
     except Exception as e:
         connection.rollback()

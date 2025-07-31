@@ -35,3 +35,14 @@ class ClienteUpdate(BaseModel):
     genero: Optional[str] = None
     id_contato: Optional[int] = None
     id_endereco: Optional[int] = None
+
+class ClienteNoDetails(BaseModel):
+    id_cliente: int
+    cpf: str
+    pnome: str
+    unome: str
+    data_nasc: date
+    genero: str
+    id_contato: int
+    id_endereco: Optional[int] = None
+
